@@ -1,0 +1,4 @@
+char c = 'A'; 
+double *p = &c;
+
+El error es que p es un puntero a un double, pero se le asigna la dirección de un char
