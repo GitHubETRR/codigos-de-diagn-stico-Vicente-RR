@@ -1,0 +1,10 @@
+/*
+Si se declara: float x, *p; ¿Cuál de las siguientes expresiones es correcta? 
+•	p=&x; 
+•	Ninguna de las restantes respuestas es correcta
+• x=p*;   p* no existe
+•	&x=p; 
+•	&p=x; 
+
+Ninguna es correcta
+*/
