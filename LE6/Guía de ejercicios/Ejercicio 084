@@ -1,0 +1,1 @@
+El error es que xPtr es de tipo (int *), pero se le asigna como valor un (float *)
