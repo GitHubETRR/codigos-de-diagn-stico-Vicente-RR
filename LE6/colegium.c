@@ -64,7 +64,7 @@ typedef struct colegio
 
 //Prototipos
 colegio_t * Menu(colegio_t * _colegio);
-colegio_t * AgregarColegio(colegio_t * _colegio);
+void * Agregar(colegio_t * lista, int tipo);
 int ImprimirLista(colegio_t * lista, int tipo);
 int PedirUbicacion(int cantidad);
 void LimpiarTeclado();
@@ -104,7 +104,7 @@ colegio_t * Menu(colegio_t * _colegio)
                 
                 break;
             case OP_AGREGAR_COLEGIO:
-                _colegio = AgregarColegio(_colegio);
+                _colegio = (colegio_t *) Agregar(_colegio, LISTA_COLEGIO);
                 break;
             case OP_ELIMINAR_COLEGIO:
                 
@@ -124,6 +124,7 @@ colegio_t * Menu(colegio_t * _colegio)
     return _colegio;
 }
 
+/*
 colegio_t * AgregarColegio(colegio_t * _colegio)
 {
     int ubicacion = 0;
@@ -156,6 +157,63 @@ colegio_t * AgregarColegio(colegio_t * _colegio)
     fgets(nuevoColegio->nombre, sizeof(nuevoColegio->nombre), stdin);
     
     return _colegio;
+}
+*/
+
+void * Agregar(colegio_t * lista, int tipo) //las listas son punteros colegio_t provisoriamente para que compile, pero luego se castea
+{
+    colegio_t * nuevo=NULL;
+    colegio_t * aux1=NULL;
+    colegio_t * aux2=NULL;
+    switch (tipo)
+    {
+        case LISTA_COLEGIO:
+            lista = (colegio_t *) lista;
+            nuevo = (colegio_t *) malloc(sizeof(colegio_t));
+            aux1 = (colegio_t *) aux1;
+            aux2 = (colegio_t *) aux2;
+            break;
+        case LISTA_CURSO:
+            lista = (curso_t *) lista;
+            nuevo = (curso_t *) malloc(sizeof(curso_t));
+            aux1 = (curso_t *) aux1;
+            aux2 = (curso_t *) aux2;
+            break;
+        default:
+            printf("Error inesperado");
+            exit(1);
+            break;
+    }
+    int ubicacion = 0;
+    
+    if (lista != NULL)
+    {
+        int cantidad = ImprimirLista(lista, tipo);
+        ubicacion = PedirUbicacion(cantidad);
+        aux1 = lista;
+        for (int i=0; i<(ubicacion-1); i++)
+            aux1 = aux1->next;
+        aux2 = aux1->next;
+        if (ubicacion==0)
+        {
+            lista = nuevo;
+            lista->next = aux1;
+        }
+        else
+        {
+            aux1->next = nuevo;
+            nuevo->next = aux2;
+        }
+    }
+    else
+    {
+        lista = nuevo;
+        lista->next = NULL;
+    }
+    printf("Nombre: ");
+    fgets(nuevo->nombre, sizeof(nuevo->nombre), stdin);
+    
+    return lista;
 }
 
 int ImprimirLista(colegio_t * lista, int tipo) //la lista es un puntero colegio_t provisoriamente, pero luego se castea
