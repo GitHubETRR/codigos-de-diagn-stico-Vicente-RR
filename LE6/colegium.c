@@ -64,6 +64,8 @@ typedef struct colegio
 
 //Prototipos
 colegio_t * Menu(colegio_t * _colegio);
+void MenuColegio(curso_t * _curso);
+void * Seleccionar(colegio_t * lista, int tipo);
 void * Agregar(colegio_t * lista, int tipo);
 int ImprimirLista(colegio_t * lista, int tipo);
 int PedirUbicacion(int cantidad);
@@ -91,7 +93,6 @@ colegio_t * Menu(colegio_t * _colegio)
     printf("3. Eliminar colegio\n");
     printf("4. Vaciar\n");
     printf("5. Salir\n" RESET);
-    
     do
     {
         opcionValida = true;
@@ -101,7 +102,9 @@ colegio_t * Menu(colegio_t * _colegio)
         switch (opcion)
         {
             case OP_SELECCIONAR_COLEGIO:
-                
+                colegio_t * seleccion = Seleccionar(_colegio, LISTA_COLEGIO);
+                if (seleccion != NULL)
+                    MenuColegio(seleccion->_curso);
                 break;
             case OP_AGREGAR_COLEGIO:
                 _colegio = (colegio_t *) Agregar(_colegio, LISTA_COLEGIO);
@@ -124,41 +127,42 @@ colegio_t * Menu(colegio_t * _colegio)
     return _colegio;
 }
 
-/*
-colegio_t * AgregarColegio(colegio_t * _colegio)
+void MenuColegio(curso_t * _curso)
 {
-    int ubicacion = 0;
-    colegio_t * nuevoColegio = (colegio_t *) malloc(sizeof(colegio_t));
-    if (_colegio != NULL)
+    
+}
+
+void * Seleccionar(colegio_t * lista, int tipo)
+{
+    switch (tipo)
     {
-        int cantidadColegios = ImprimirLista(_colegio, LISTA_COLEGIO);
-        ubicacion = PedirUbicacion(cantidadColegios);
-        colegio_t * aux1 = _colegio;
-        for (int i=0; i<(ubicacion-1); i++)
-            aux1 = aux1->next;
-        colegio_t * aux2 = aux1->next;
-        if (ubicacion==0)
+        case LISTA_COLEGIO:
+            lista = (colegio_t *) lista;
+            break;
+        case LISTA_CURSO:
+            lista = (curso_t *) lista;
+            break;
+        default:
+            printf("Error inesperado");
+            exit(1);
+            break;
+    }
+    int cantidad = ImprimirLista(lista, tipo);
+    if (cantidad>0)
+    {
+        int ubicacion = PedirUbicacion(cantidad-1); //-1 para que no se pueda elegir más que el último
+        for (int i=0; i<ubicacion; i++)
         {
-            _colegio = nuevoColegio;
-            _colegio->next = aux1;
+            lista = lista->next;
         }
-        else
-        {
-            aux1->next = nuevoColegio;
-            nuevoColegio->next = aux2;
-        }
+        printf("Selección: %s\n", lista->nombre);
     }
     else
     {
-        _colegio = nuevoColegio;
-        _colegio->next = NULL;
+        lista = NULL;
     }
-    printf("Nombre: ");
-    fgets(nuevoColegio->nombre, sizeof(nuevoColegio->nombre), stdin);
-    
-    return _colegio;
+    return lista;
 }
-*/
 
 void * Agregar(colegio_t * lista, int tipo) //las listas son punteros colegio_t provisoriamente para que compile, pero luego se castea
 {
