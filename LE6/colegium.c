@@ -6,11 +6,11 @@
 
 #define MAX_CHAR 50
 
-#define OP_SELECCIONAR_COLEGIO '1'
-#define OP_AGREGAR_COLEGIO '2'
-#define OP_ELIMINAR_COLEGIO '3'
-#define OP_VACIAR_COLEGIOS '4'
-#define OP_CERRAR_PROGRAMA '5'
+#define OP_SELECCIONAR '1'
+#define OP_AGREGAR '2'
+#define OP_ELIMINAR '3'
+#define OP_VACIAR '4'
+#define OP_SALIR '5'
 
 #define LISTA_COLEGIO 1
 #define LISTA_CURSO 2
@@ -67,21 +67,21 @@ typedef struct colegio
 }colegio_t;
 
 //Prototipos
-colegio_t * Menu(colegio_t * _colegio);
-void MenuColegio(curso_t * _curso);
+void MenuColegio(colegio_t * _curso);
+void MenuCurso();
 //las listas son punteros colegio_t provisoriamente para que compile, pero luego se castea
 void * Seleccionar(colegio_t * lista, int tipo);
 void * Agregar(colegio_t * lista, int tipo);
 int ImprimirLista(colegio_t * lista, int tipo);
 int PedirUbicacion(int cantidad);
 
-void * BorrarElemento(colegio_t * lista, colegio_t * elemento, int tipo);
+void * BorrarElemento(colegio_t * lista, int tipo);
 void BorrarLista(colegio_t * lista, int tipo);
 void BorrarNotas(evaluacion_t * evaluacion);
 void BorrarEvaluaciones(materia_t * materia);
-BorrarMaterias(curso_t * curso);
-BorrarAlumnos(curso_t * curso);
-BorrarCursos(colegio_t * colegio);
+void BorrarMaterias(curso_t * curso);
+void BorrarAlumnos(curso_t * curso);
+void BorrarCursos(colegio_t * colegio);
 
 void LimpiarTeclado();
 void LimpiarPantalla();
@@ -89,84 +89,129 @@ void LimpiarPantalla();
 int main()
 {
     colegio_t * _colegio = NULL;
-    while (true)
+    bool salir = false;
+    
+    while (!salir)
     {
-        _colegio = Menu(_colegio);
+        char opcion;
+        bool opcionValida;
+        
+        printf(VERDE NEGRITA SUBRAYADO "Menú\n" RESET);
+        printf(VERDE NEGRITA "1. Seleccionar colegio\n");
+        printf("2. Agregar colegio\n");
+        printf("3. Eliminar colegio\n");
+        printf("4. Vaciar\n");
+        printf("5. Salir\n" RESET);
+        do
+        {
+            opcionValida = true;
+            scanf("%c", &opcion);
+            LimpiarTeclado();
+            
+            switch (opcion)
+            {
+                case OP_SELECCIONAR:
+                    colegio_t * seleccion = Seleccionar(_colegio, LISTA_COLEGIO);
+                    if (seleccion != NULL)
+                    {
+                        LimpiarPantalla();
+                        MenuColegio(seleccion);
+                    }
+                    else
+                    {
+                        printf("No hay colegios guardados");
+                        getchar();
+                    }
+                    break;
+                case OP_AGREGAR:
+                    _colegio = (colegio_t *) Agregar(_colegio, LISTA_COLEGIO);
+                    break;
+                case OP_ELIMINAR:
+                    _colegio = BorrarElemento(_colegio, LISTA_COLEGIO);
+                    break;
+                case OP_VACIAR:
+                        BorrarLista(_colegio, LISTA_COLEGIO);
+                        _colegio = NULL;
+                    break;
+                case OP_SALIR:
+                    BorrarLista(_colegio, LISTA_COLEGIO);
+                    salir = true;
+                    break;
+                default:
+                    opcionValida = false;
+                    printf("Opción no válida\n");
+            }
+            LimpiarPantalla();
+        } while (!opcionValida);
     }
+    
     return 0;
 }
 
-colegio_t * Menu(colegio_t * _colegio)
+void MenuColegio(colegio_t * colegio)
 {
-    char opcion;
-    bool opcionValida;
+    bool salir = false;
+    curso_t * _curso = colegio->_curso;
     
-    printf(VERDE NEGRITA SUBRAYADO "Menú\n" RESET);
-    printf(VERDE NEGRITA "1. Seleccionar colegio\n");
-    printf("2. Agregar colegio\n");
-    printf("3. Eliminar colegio\n");
-    printf("4. Vaciar\n");
-    printf("5. Salir\n" RESET);
-    do
+    while (!salir)
     {
-        opcionValida = true;
-        scanf("%c", &opcion);
-        LimpiarTeclado();
+        char opcion;
+        bool opcionValida;
         
-        switch (opcion)
+        printf(VERDE NEGRITA SUBRAYADO "Colegio: %s\n" RESET, colegio->nombre);
+        printf(VERDE NEGRITA "1. Seleccionar curso\n");
+        printf("2. Agregar curso\n");
+        printf("3. Eliminar curso\n");
+        printf("4. Vaciar\n");
+        printf("5. Salir\n" RESET);
+        do
         {
-            case OP_SELECCIONAR_COLEGIO:
-                colegio_t * seleccion = Seleccionar(_colegio, LISTA_COLEGIO);
-                if (seleccion != NULL)
-                    MenuColegio(seleccion->_curso);
-                break;
-            case OP_AGREGAR_COLEGIO:
-                _colegio = (colegio_t *) Agregar(_colegio, LISTA_COLEGIO);
-                break;
-            case OP_ELIMINAR_COLEGIO:
-                int cantidad = ImprimirLista(_colegio, LISTA_COLEGIO);
-                int ubicacion = PedirUbicacion(cantidad);
-                colegio_t * eliminar = _colegio;
-                for (int i=0; i<ubicacion; i++)
-                    eliminar = eliminar->next;
-                _colegio = BorrarElemento(_colegio, eliminar, LISTA_COLEGIO);
-                break;
-            case OP_VACIAR_COLEGIOS:
-                    BorrarLista(_colegio, LISTA_COLEGIO);
-                    _colegio = NULL;
-                break;
-            case OP_CERRAR_PROGRAMA:
-                
-                break;
-            default:
-                opcionValida = false;
-                printf("Opción no válida\n");
-        }
-    } while (!opcionValida);
-    
-    return _colegio;
+            opcionValida = true;
+            scanf("%c", &opcion);
+            LimpiarTeclado();
+            
+            switch (opcion)
+            {
+                case OP_SELECCIONAR:
+                    curso_t * seleccion = (curso_t *) Seleccionar((colegio_t *) _curso, LISTA_CURSO);
+                    if (seleccion != NULL)
+                    {
+                        LimpiarPantalla();
+                        MenuCurso();
+                    }
+                    else
+                    {
+                        printf("No hay cursos guardados");
+                        getchar();
+                    }
+                    break;
+                case OP_AGREGAR:
+                    _curso = (curso_t *) Agregar((colegio_t *) _curso, LISTA_CURSO);
+                    break;
+                case OP_ELIMINAR:
+                    _curso = BorrarElemento((colegio_t *) _curso, LISTA_CURSO);
+                    break;
+                case OP_VACIAR:
+                        BorrarLista((colegio_t *) _curso, LISTA_CURSO);
+                        _curso = NULL;
+                    break;
+                case OP_SALIR:
+                    colegio->_curso = _curso;
+                    salir = true;
+                    break;
+                default:
+                    opcionValida = false;
+                    printf("Opción no válida\n");
+            }
+            LimpiarPantalla();
+        } while (!opcionValida);
+    }
 }
 
-void MenuColegio(curso_t * _curso)
-{
-    
-}
+void MenuCurso(){}
 
 void * Seleccionar(colegio_t * lista, int tipo)
 {
-    switch (tipo)
-    {
-        case LISTA_COLEGIO:
-            lista = (colegio_t *) lista;
-            break;
-        case LISTA_CURSO:
-            lista = (curso_t *) lista;
-            break;
-        default:
-            printf("Error inesperado");
-            exit(1);
-            break;
-    }
     int cantidad = ImprimirLista(lista, tipo);
     if (cantidad>0)
     {
@@ -175,7 +220,6 @@ void * Seleccionar(colegio_t * lista, int tipo)
         {
             lista = lista->next;
         }
-        printf("Selección: %s\n", lista->nombre);
     }
     else
     {
@@ -186,28 +230,31 @@ void * Seleccionar(colegio_t * lista, int tipo)
 
 void * Agregar(colegio_t * lista, int tipo)
 {
-    colegio_t * nuevo=NULL;
     colegio_t * aux1=NULL;
     colegio_t * aux2=NULL;
+    int tamanio=0;
     switch (tipo)
     {
         case LISTA_COLEGIO:
-            lista = (colegio_t *) lista;
-            nuevo = (colegio_t *) malloc(sizeof(colegio_t));
-            aux1 = (colegio_t *) aux1;
-            aux2 = (colegio_t *) aux2;
+            tamanio = sizeof(colegio_t);
             break;
         case LISTA_CURSO:
-            lista = (curso_t *) lista;
-            nuevo = (curso_t *) malloc(sizeof(curso_t));
-            aux1 = (curso_t *) aux1;
-            aux2 = (curso_t *) aux2;
+            tamanio = sizeof(curso_t);
             break;
-        default:
-            printf("Error inesperado");
-            exit(1);
+        case LISTA_MATERIA:
+            tamanio = sizeof(materia_t);
+            break;
+        case LISTA_EVALUACION:
+            tamanio = sizeof(evaluacion_t);
+            break;
+        case LISTA_NOTA:
+            tamanio = sizeof(nota_t);
+            break;
+        case LISTA_ALUMNO:
+            tamanio = sizeof(alumno_t);
             break;
     }
+    colegio_t * nuevo = (colegio_t *) malloc(tamanio);;
     int ubicacion = 0;
     
     if (lista != NULL)
@@ -242,21 +289,7 @@ void * Agregar(colegio_t * lista, int tipo)
 
 int ImprimirLista(colegio_t * lista, int tipo)
 {
-    switch (tipo)
-    {
-        case LISTA_COLEGIO:
-            lista = (colegio_t *) lista;
-            break;
-        case LISTA_CURSO:
-            lista = (curso_t *) lista;
-            break;
-        default:
-            printf("Error inesperado");
-            exit(1);
-            break;
-    }
-
-    int tamanio=0;
+    int tamanio = 0;
     while (lista != NULL)
     {
         printf("%i - %s\n", (tamanio+1), lista->nombre);
@@ -286,39 +319,32 @@ int PedirUbicacion(int cantidad)
     return ubicacion;
 }
 
-void * BorrarElemento(colegio_t * lista, colegio_t * elemento, int tipo)
+void * BorrarElemento(colegio_t * lista, int tipo)
 {
+    
+    colegio_t * elemento = lista;
     colegio_t * previo;
     switch (tipo)
     {
         case LISTA_COLEGIO:
-            elemento = (colegio_t *) elemento;
-            BorrarCursos(elemento);
+            BorrarCursos((colegio_t *) elemento);
             break;
         case LISTA_CURSO:
-            elemento = (curso_t *) elemento;
-            BorrarMaterias(elemento);
-            BorrarAlumnos(elemento);
+            BorrarMaterias((curso_t *) elemento);
+            BorrarAlumnos((curso_t *) elemento);
             break;
         case LISTA_MATERIA:
-            elemento = (materia_t *) elemento;
-            BorrarEvaluaciones(elemento);
+            BorrarEvaluaciones((materia_t *) elemento);
             break;
         case LISTA_EVALUACION:
-            elemento = (evaluacion_t *) elemento;
-            BorrarNotas(elemento);
-            break;
-        case LISTA_NOTA:
-            elemento = (nota_t *) elemento;
-            break;
-        case LISTA_ALUMNO:
-            elemento = (alumno_t *) elemento;
-            break;
-        default:
-            printf("Error inesperado");
-            exit(1);
+            BorrarNotas((evaluacion_t *) elemento);
             break;
     }
+    
+    int cantidad = ImprimirLista(lista, tipo);
+    int ubicacion = PedirUbicacion(cantidad);
+    for (int i=0; i<ubicacion; i++)
+        elemento = elemento->next;
     if (elemento==lista)
         lista = elemento->next;
     else
@@ -337,94 +363,84 @@ void BorrarLista(colegio_t * lista, int tipo)
     switch (tipo)
     {
         case LISTA_COLEGIO:
-            lista = (colegio_t *) lista;
             while (lista != NULL)
             {
-                BorrarCursos(lista);
+                BorrarCursos((colegio_t *) lista);
                 colegio_t * aux = lista->next;
-                free(lista);
+                free((colegio_t *) lista);
                 lista = aux;
             }
             break;
         case LISTA_CURSO:
-            lista = (curso_t *) lista;
             while (lista != NULL)
             {
-                BorrarMaterias(lista);
-                BorrarAlumnos(lista);
-                curso_t * aux = lista->next;
-                free(lista);
+                BorrarMaterias((curso_t *) lista);
+                BorrarAlumnos((curso_t *) lista);
+                colegio_t * aux = lista->next;
+                free((curso_t *) lista);
                 lista = aux;
             }
             break;
         case LISTA_MATERIA:
-            lista = (materia_t *) lista;
             while (lista != NULL)
             {
-                BorrarEvaluaciones(lista);
-                materia_t * aux = lista->next;
-                free(lista);
+                BorrarEvaluaciones((materia_t *) lista);
+                colegio_t * aux = lista->next;
+                free((materia_t *) lista);
                 lista = aux;
             }
             break;
         case LISTA_EVALUACION:
-            lista = (evaluacion_t *) lista;
             while (lista != NULL)
             {
-                BorrarNotas(lista);
-                evaluacion_t * aux = lista->next;
-                free(lista);
+                BorrarNotas((evaluacion_t *) lista);
+                colegio_t * aux = lista->next;
+                free((evaluacion_t *) lista);
                 lista = aux;
             }
             break;
         case LISTA_NOTA:
-            lista = (nota_t *) lista;
             while (lista != NULL)
             {
-                nota_t * aux = lista->next;
-                free(lista);
+                colegio_t * aux = lista->next;
+                free((nota_t *) lista);
                 lista = aux;
             }
             break;
         case LISTA_ALUMNO:
-            lista = (alumno_t *) lista;
             while (lista != NULL)
             {
-                alumno_t * aux = lista->next;
-                free(lista);
+                colegio_t * aux = lista->next;
+                free((alumno_t *) lista);
                 lista = aux;
             }
-            break;
-        default:
-            printf("Error inesperado");
-            exit(1);
             break;
     }
 }
 
 void BorrarNotas(evaluacion_t * evaluacion)
 {
-    BorrarLista(evaluacion->_nota, LISTA_NOTA);
+    BorrarLista((colegio_t *) (evaluacion->_nota), LISTA_NOTA);
 }
 
 void BorrarEvaluaciones(materia_t * materia)
 {
-    BorrarLista(materia->_evaluacion, LISTA_EVALUACION);
+    BorrarLista((colegio_t *) (materia->_evaluacion), LISTA_EVALUACION);
 }
 
-BorrarMaterias(curso_t * curso)
+void BorrarMaterias(curso_t * curso)
 {
-    BorrarLista(curso->_materia, LISTA_MATERIA);
+    BorrarLista((colegio_t *) (curso->_materia), LISTA_MATERIA);
 }
 
-BorrarAlumnos(curso_t * curso)
+void BorrarAlumnos(curso_t * curso)
 {
-    BorrarLista(curso->_alumno, LISTA_ALUMNO);
+    BorrarLista((colegio_t *) (curso->_alumno), LISTA_ALUMNO);
 }
 
-BorrarCursos(colegio_t * colegio)
+void BorrarCursos(colegio_t * colegio)
 {
-    BorrarLista(colegio->_curso, LISTA_CURSO);
+    BorrarLista((colegio_t *) (colegio->_curso), LISTA_CURSO);
 }
 
 void LimpiarTeclado()
