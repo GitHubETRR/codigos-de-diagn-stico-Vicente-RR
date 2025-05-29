@@ -6,6 +6,7 @@
 
 #define MAX_CHAR 50
 
+#define OP_NOMBRE '0'
 #define OP_SELECCIONAR '1'
 #define OP_AGREGAR '2'
 #define OP_ELIMINAR '3'
@@ -17,6 +18,8 @@
 #define OP_ELIMINAR_2 '7'
 #define OP_VACIAR_2 '8'
 #define OP_SALIR_2 '9'
+
+#define OP_MODIFICAR '1'
 
 #define LISTA_COLEGIO 1
 #define LISTA_CURSO 2
@@ -30,7 +33,6 @@ typedef struct alumno
 {
     char nombre[MAX_CHAR];
     struct alumno * next;
-    char apellido[MAX_CHAR];
     int id;
     float promedio;
 }alumno_t;
@@ -76,10 +78,13 @@ typedef struct colegio
 void MenuColegio(colegio_t * _curso);
 void MenuCurso(curso_t * curso);
 void MenuMateria(materia_t * materia, alumno_t * _alumno);
+void MenuEvaluacion(evaluacion_t * evaluacion, alumno_t * _alumno);
 void MenuAlumno(alumno_t * alumno, materia_t * _materia);
 //las listas son punteros colegio_t provisoriamente para que compile, pero luego se castea
+void CambiarNombre(char nombre[MAX_CHAR]);
 void * Seleccionar(colegio_t * lista, int tipo);
 void * Agregar(colegio_t * lista, int tipo);
+void AgregarID(alumno_t * alumno, alumno_t * lista);
 int ImprimirLista(colegio_t * lista, int tipo);
 int PedirUbicacion(int cantidad);
 
@@ -105,11 +110,13 @@ int main()
         bool opcionValida;
         
         printf(VERDE NEGRITA SUBRAYADO "Menú\n" RESET);
-        printf(VERDE NEGRITA "1. Seleccionar colegio\n");
-        printf("2. Agregar colegio\n");
-        printf("3. Eliminar colegio\n");
-        printf("4. Vaciar\n");
-        printf("5. Salir\n" RESET);
+        printf(VERDE NEGRITA);
+        printf("%c. Seleccionar colegio\n", OP_SELECCIONAR);
+        printf("%c. Agregar colegio\n", OP_AGREGAR);
+        printf("%c. Eliminar colegio\n", OP_ELIMINAR);
+        printf("%c. Vaciar\n", OP_VACIAR);
+        printf("%c. Salir\n", OP_SALIR);
+        printf(RESET);
         do
         {
             opcionValida = true;
@@ -149,8 +156,8 @@ int main()
                     opcionValida = false;
                     printf("Opción no válida\n");
             }
-            LimpiarPantalla();
         } while (!opcionValida);
+        LimpiarPantalla();
     }
     
     return 0;
@@ -167,11 +174,14 @@ void MenuColegio(colegio_t * colegio)
         bool opcionValida;
         
         printf(VERDE NEGRITA SUBRAYADO "Colegio: %s\n" RESET, colegio->nombre);
-        printf(VERDE NEGRITA "1. Seleccionar curso\n");
-        printf("2. Agregar curso\n");
-        printf("3. Eliminar curso\n");
-        printf("4. Vaciar\n");
-        printf("5. Salir\n" RESET);
+        printf(VERDE NEGRITA);
+        printf("%c. Cambiar nombre\n", OP_NOMBRE);
+        printf("%c. Seleccionar curso\n", OP_SELECCIONAR);
+        printf("%c. Agregar curso\n", OP_AGREGAR);
+        printf("%c. Eliminar curso\n", OP_ELIMINAR);
+        printf("%c. Vaciar\n", OP_VACIAR);
+        printf("%c. Salir\n", OP_SALIR);
+        printf(RESET);
         do
         {
             opcionValida = true;
@@ -180,6 +190,9 @@ void MenuColegio(colegio_t * colegio)
             
             switch (opcion)
             {
+                case OP_NOMBRE:
+                    CambiarNombre(colegio->nombre);
+                    break;
                 case OP_SELECCIONAR:
                     curso_t * seleccion = (curso_t *) Seleccionar((colegio_t *) _curso, LISTA_CURSO);
                     if (seleccion != NULL)
@@ -211,8 +224,8 @@ void MenuColegio(colegio_t * colegio)
                     opcionValida = false;
                     printf("Opción no válida\n");
             }
-            LimpiarPantalla();
         } while (!opcionValida);
+        LimpiarPantalla();
     }
 }
 
@@ -228,15 +241,18 @@ void MenuCurso(curso_t * curso)
         bool opcionValida;
         
         printf(VERDE NEGRITA SUBRAYADO "Curso: %s\n" RESET, curso->nombre);
-        printf(VERDE NEGRITA "1. Seleccionar materia\n");
-        printf("2. Agregar materia\n");
-        printf("3. Eliminar materia\n");
-        printf("4. Vaciar materias\n");
-        printf("5. Seleccionar alumno\n");
-        printf("6. Agregar alumno\n");
-        printf("7. Eliminar alumno\n");
-        printf("8. Vaciar alumnos\n");
-        printf("9. Salir\n" RESET);
+        printf(VERDE NEGRITA);
+        printf("%c. Cambiar nombre\n", OP_NOMBRE);
+        printf("%c. Seleccionar materia\n", OP_SELECCIONAR);
+        printf("%c. Agregar materia\n", OP_AGREGAR);
+        printf("%c. Eliminar materia\n", OP_ELIMINAR);
+        printf("%c. Vaciar materias\n", OP_VACIAR);
+        printf("%c. Seleccionar alumno\n", OP_SELECCIONAR_2);
+        printf("%c. Agregar alumno\n", OP_AGREGAR_2);
+        printf("%c. Eliminar alumno\n", OP_ELIMINAR_2);
+        printf("%c. Vaciar alumnos\n", OP_VACIAR_2);
+        printf("%c. Salir\n", OP_SALIR_2);
+        printf(RESET);
         do
         {
             opcionValida = true;
@@ -245,6 +261,9 @@ void MenuCurso(curso_t * curso)
             
             switch (opcion)
             {
+                case OP_NOMBRE:
+                    CambiarNombre(curso->nombre);
+                    break;
                 case OP_SELECCIONAR:
                     materia_t * seleccionMateria = (materia_t *) Seleccionar((colegio_t *) _materia, LISTA_MATERIA);
                     if (seleccionMateria != NULL)
@@ -277,7 +296,7 @@ void MenuCurso(curso_t * curso)
                     }
                     else
                     {
-                        printf("No hay cursos guardados");
+                        printf("No hay alumnos guardados");
                         getchar();
                     }
                     break;
@@ -300,19 +319,165 @@ void MenuCurso(curso_t * curso)
                     opcionValida = false;
                     printf("Opción no válida\n");
             }
-            LimpiarPantalla();
         } while (!opcionValida);
+        LimpiarPantalla();
     }
 }
 
 void MenuMateria(materia_t * materia, alumno_t * _alumno)
 {
+    bool salir = false;
+    evaluacion_t * _evaluacion = materia->_evaluacion;
     
+    while (!salir)
+    {
+        char opcion;
+        bool opcionValida;
+        
+        printf(VERDE NEGRITA SUBRAYADO "Materia: %s\n" RESET, materia->nombre);
+        printf(VERDE NEGRITA);
+        printf("%c. Cambiar nombre\n", OP_NOMBRE);
+        printf("%c. Seleccionar evaluación\n", OP_SELECCIONAR);
+        printf("%c. Agregar evaluación\n", OP_AGREGAR);
+        printf("%c. Eliminar evaluación\n", OP_ELIMINAR);
+        printf("%c. Vaciar\n", OP_VACIAR);
+        printf("%c. Salir\n", OP_SALIR);
+        printf(RESET);
+        do
+        {
+            opcionValida = true;
+            scanf("%c", &opcion);
+            LimpiarTeclado();
+            
+            switch (opcion)
+            {
+                case OP_NOMBRE:
+                    CambiarNombre(materia->nombre);
+                    break;
+                case OP_SELECCIONAR:
+                    evaluacion_t * seleccion = (evaluacion_t *) Seleccionar((colegio_t *) _evaluacion, LISTA_EVALUACION);
+                    if (seleccion != NULL)
+                    {
+                        LimpiarPantalla();
+                        MenuEvaluacion(seleccion, _alumno);
+                    }
+                    else
+                    {
+                        printf("No hay evaluaciones guardadas");
+                        getchar();
+                    }
+                    break;
+                case OP_AGREGAR:
+                    _evaluacion = (evaluacion_t *) Agregar((colegio_t *) _evaluacion, LISTA_EVALUACION);
+                    break;
+                case OP_ELIMINAR:
+                    _evaluacion = (evaluacion_t *) BorrarElemento((colegio_t *) _evaluacion, LISTA_EVALUACION);
+                    break;
+                case OP_VACIAR:
+                        BorrarLista((colegio_t *) _evaluacion, LISTA_EVALUACION);
+                        _evaluacion = NULL;
+                    break;
+                case OP_SALIR:
+                    materia->_evaluacion = _evaluacion;
+                    salir = true;
+                    break;
+                default:
+                    opcionValida = false;
+                    printf("Opción no válida\n");
+            }
+        } while (!opcionValida);
+        LimpiarPantalla();
+    }
+}
+
+void MenuEvaluacion(evaluacion_t * evaluacion, alumno_t * _alumno)
+{
+    /*
+    typedef struct evaluacion
+{
+    char nombre[MAX_CHAR];
+    struct evaluacion * next;
+    float ponderacion;
+    nota_t * _nota;
+}evaluacion_t;
+    */
+    bool salir = false;
+    nota_t * _nota = evaluacion->_nota;
+    
+    while (!salir)
+    {
+        char opcion;
+        bool opcionValida;
+        
+        printf(VERDE NEGRITA SUBRAYADO "Evaluacion: %s\n" RESET, evaluacion->nombre);
+        printf(VERDE NEGRITA);
+        printf("%c. Cambiar nombre\n", OP_NOMBRE);
+        printf("%c. Modificar ponderación\n", OP_MODIFICAR);
+        printf("%c. Agregar/modificar notas\n", OP_AGREGAR);
+        printf("%c. Eliminar notas\n", OP_ELIMINAR);
+        printf("%c. Vaciar notas\n", OP_VACIAR);
+        printf("%c. Salir\n", OP_SALIR);
+        printf(RESET);
+        do
+        {
+            opcionValida = true;
+            scanf("%c", &opcion);
+            LimpiarTeclado();
+            
+            switch (opcion)
+            {
+                case OP_NOMBRE:
+                    CambiarNombre(evaluacion->nombre);
+                    break;
+                case OP_MODIFICAR:
+                    float ponderacion;
+                    bool valorValido;
+                    
+                    do
+                    {
+                        valorValido = true;
+                        printf("Introducí la ponderación de " CELESTE NEGRITA SUBRAYADO "%s" RESET "en formato float (ej: 0.1 = 10%%)\n", evaluacion->nombre);
+                        scanf("%f", &ponderacion);
+                        if ((ponderacion < 0.0) || (ponderacion > 1.0))
+                        {
+                            printf(ROJO "La ponderación debe estar entre 0 y 1\n" RESET);
+                            valorValido = false;
+                        }
+                    } while (!valorValido);
+                    evaluacion->ponderacion = ponderacion;
+                    break;
+                case OP_AGREGAR:
+                    ImprimirNotas(_nota, _alumno);
+                    break;
+                case OP_ELIMINAR:
+                    
+                    break;
+                case OP_VACIAR:
+                        BorrarLista((colegio_t *) _nota, LISTA_NOTA);
+                        _nota = NULL;
+                    break;
+                case OP_SALIR:
+                    evaluacion->_nota = _nota;
+                    salir = true;
+                    break;
+                default:
+                    opcionValida = false;
+                    printf("Opción no válida\n");
+            }
+        } while (!opcionValida);
+        LimpiarPantalla();
+    }
 }
 
 void MenuAlumno(alumno_t * alumno, materia_t * _materia)
 {
     
+}
+
+void CambiarNombre(char nombre[MAX_CHAR])
+{
+    printf(AZUL NEGRITA "Escribí el nuevo nombre para " RESET CELESTE NEGRITA SUBRAYADO "%s\n" RESET, nombre);
+    fgets(nombre, sizeof(char[MAX_CHAR]), stdin);
 }
 
 void * Seleccionar(colegio_t * lista, int tipo)
@@ -359,7 +524,9 @@ void * Agregar(colegio_t * lista, int tipo)
             tamanio = sizeof(alumno_t);
             break;
     }
-    colegio_t * nuevo = (colegio_t *) malloc(tamanio);;
+    colegio_t * nuevo = (colegio_t *) malloc(tamanio);
+    if (tipo == LISTA_ALUMNO)
+        AgregarID((alumno_t *) nuevo, (alumno_t *) lista);
     int ubicacion = 0;
     
     if (lista != NULL)
@@ -386,10 +553,24 @@ void * Agregar(colegio_t * lista, int tipo)
         lista = nuevo;
         lista->next = NULL;
     }
+    
     printf("Nombre: ");
     fgets(nuevo->nombre, sizeof(nuevo->nombre), stdin);
     
     return lista;
+}
+
+void AgregarID(alumno_t * alumno, alumno_t * lista)
+{
+    int id = 0;
+    while (lista != NULL)
+    {
+        if (lista->id >= id)
+        {
+            id = lista->id + 1;
+        }
+    }
+    alumno->id = id;
 }
 
 int ImprimirLista(colegio_t * lista, int tipo)
@@ -402,6 +583,11 @@ int ImprimirLista(colegio_t * lista, int tipo)
         tamanio++;
     }
     return tamanio;
+}
+
+ImprimirNotas(nota_t * _nota, alumno_t * _alumno)
+{
+    
 }
 
 int PedirUbicacion(int cantidad)
