@@ -5,6 +5,10 @@
 #include "color.h"
 
 #define MAX_CHAR 50
+#define MIN_NOTA 0.0
+#define MAX_NOTA 10.0
+#define MIN_PONDERACION 0.0
+#define MAX_PONDERACION 1.0
 
 #define OP_NOMBRE '0'
 #define OP_SELECCIONAR '1'
@@ -87,6 +91,11 @@ void * Agregar(colegio_t * lista, int tipo);
 void AgregarID(alumno_t * alumno, alumno_t * lista);
 int ImprimirLista(colegio_t * lista, int tipo);
 int PedirUbicacion(int cantidad);
+
+void ModificarPonderacion(evaluacion_t * evaluacion);
+nota_t * AgregarNota(nota_t * _nota, alumno_t * _alumno);
+int ImprimirNotas(nota_t * _nota, alumno_t * _alumno);
+float PedirNota(void);
 
 void * BorrarElemento(colegio_t * lista, int tipo);
 void BorrarLista(colegio_t * lista, int tipo);
@@ -269,7 +278,7 @@ void MenuCurso(curso_t * curso)
                     if (seleccionMateria != NULL)
                     {
                         LimpiarPantalla();
-                        MenuMateria(seleccionMateria, curso->_alumno);
+                        MenuMateria(seleccionMateria, _alumno);
                     }
                     else
                     {
@@ -430,24 +439,10 @@ void MenuEvaluacion(evaluacion_t * evaluacion, alumno_t * _alumno)
                     CambiarNombre(evaluacion->nombre);
                     break;
                 case OP_MODIFICAR:
-                    float ponderacion;
-                    bool valorValido;
-                    
-                    do
-                    {
-                        valorValido = true;
-                        printf("Introducí la ponderación de " CELESTE NEGRITA SUBRAYADO "%s" RESET "en formato float (ej: 0.1 = 10%%)\n", evaluacion->nombre);
-                        scanf("%f", &ponderacion);
-                        if ((ponderacion < 0.0) || (ponderacion > 1.0))
-                        {
-                            printf(ROJO "La ponderación debe estar entre 0 y 1\n" RESET);
-                            valorValido = false;
-                        }
-                    } while (!valorValido);
-                    evaluacion->ponderacion = ponderacion;
+                    ModificarPonderacion(evaluacion);
                     break;
                 case OP_AGREGAR:
-                    ImprimirNotas(_nota, _alumno);
+                    _nota = AgregarNota(_nota, _alumno);
                     break;
                 case OP_ELIMINAR:
                     
@@ -517,9 +512,6 @@ void * Agregar(colegio_t * lista, int tipo)
         case LISTA_EVALUACION:
             tamanio = sizeof(evaluacion_t);
             break;
-        case LISTA_NOTA:
-            tamanio = sizeof(nota_t);
-            break;
         case LISTA_ALUMNO:
             tamanio = sizeof(alumno_t);
             break;
@@ -569,6 +561,7 @@ void AgregarID(alumno_t * alumno, alumno_t * lista)
         {
             id = lista->id + 1;
         }
+        lista = lista->next;
     }
     alumno->id = id;
 }
@@ -583,11 +576,6 @@ int ImprimirLista(colegio_t * lista, int tipo)
         tamanio++;
     }
     return tamanio;
-}
-
-ImprimirNotas(nota_t * _nota, alumno_t * _alumno)
-{
-    
 }
 
 int PedirUbicacion(int cantidad)
@@ -608,6 +596,88 @@ int PedirUbicacion(int cantidad)
         }
     } while (!opcionValida);
     return ubicacion;
+}
+
+void ModificarPonderacion(evaluacion_t * evaluacion)
+{
+    float ponderacion;
+    bool valorValido;
+    
+    do
+    {
+        valorValido = true;
+        printf("Introducí la ponderación de " CELESTE NEGRITA SUBRAYADO "%s" RESET "en formato float (ej: 0.1 = 10%%)\n", evaluacion->nombre);
+        scanf("%f", &ponderacion);
+        if ((ponderacion < MIN_PONDERACION) || (ponderacion > MAX_PONDERACION))
+        {
+            printf(ROJO "La ponderación debe estar entre 0 y 1\n" RESET);
+            valorValido = false;
+        }
+    } while (!valorValido);
+    evaluacion->ponderacion = ponderacion;
+}
+
+nota_t * AgregarNota(nota_t * _nota, alumno_t * _alumno)
+{
+    nota_t * notaAux = _nota;
+    int cantidad = ImprimirNotas(_nota, _alumno);
+    int ubicacion = PedirUbicacion(cantidad);
+    for (int i=0; i<ubicacion; i++)
+    {
+        _alumno = _alumno->next;
+    }
+    while ((notaAux != NULL) && (notaAux->id != _alumno->id))
+    {
+        notaAux = notaAux->next;
+    }
+    if (notaAux == NULL)
+    {
+        notaAux = _nota;
+        _nota = (nota_t *) malloc(sizeof(nota_t));
+        _nota->next = notaAux;
+        _nota->id = _alumno->id;
+    }
+    _nota->valor = PedirNota();
+    return _nota;
+}
+
+int ImprimirNotas(nota_t * _nota, alumno_t * _alumno)
+{
+    int tamanio = 0;
+    while (_alumno != NULL)
+    {
+        printf("%i - %s", (tamanio+1), _alumno->nombre);
+        nota_t * listaNotas = _nota; //Se usa esta lista auxiliar para no perder el inicio de la lista
+        while (listaNotas != NULL)
+        {
+            if (listaNotas->id == _alumno->id)
+                printf("%.2f", listaNotas->valor);
+            listaNotas = listaNotas->next;
+        }
+        printf("\n");
+        _alumno = _alumno->next;
+        tamanio++;
+    }
+    return tamanio;
+}
+
+float PedirNota(void)
+{
+    bool valorValido;
+    float valor;
+    do
+    {
+        valorValido = true;
+        printf("Ingresá la nueva nota (entre %f y %f)\n", MIN_NOTA, MAX_NOTA);
+        scanf("%f", &valor);
+        LimpiarTeclado();
+        if ((valor < MIN_NOTA) || (valor > MAX_NOTA))
+        {
+            printf("Valor no válido\n");
+            valorValido = false;
+        }
+    } while (!valorValido);
+    return valor;
 }
 
 void * BorrarElemento(colegio_t * lista, int tipo)
