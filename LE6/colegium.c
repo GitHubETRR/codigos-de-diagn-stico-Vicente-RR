@@ -35,46 +35,52 @@
 //Estructuras
 typedef struct alumno
 {
-    char nombre[MAX_CHAR];
     struct alumno * next;
+    char nombre[MAX_CHAR];
+    
     int id;
     float promedio;
 }alumno_t;
 
 typedef struct nota
 {
+    struct nota * next;
+    
     int id;
     float valor;
-    struct nota * next;
 }nota_t;
 
 typedef struct evaluacion
 {
-    char nombre[MAX_CHAR];
     struct evaluacion * next;
+    char nombre[MAX_CHAR];
+    
     float ponderacion;
     nota_t * _nota;
 }evaluacion_t;
 
 typedef struct materia
 {
-    char nombre[MAX_CHAR];
     struct materia * next;
+    char nombre[MAX_CHAR];
+    
     evaluacion_t * _evaluacion;
 }materia_t;
 
 typedef struct curso
 {
-    char nombre[MAX_CHAR];
     struct curso * next;
+    char nombre[MAX_CHAR];
+    
     materia_t * _materia;
     alumno_t * _alumno;
 }curso_t;
 
 typedef struct colegio
 {
-    char nombre[MAX_CHAR];
     struct colegio * next;
+    char nombre[MAX_CHAR];
+    
     curso_t * _curso;
 }colegio_t;
 
@@ -107,6 +113,8 @@ void BorrarCursos(colegio_t * colegio);
 
 void LimpiarTeclado();
 void LimpiarPantalla();
+void GuardarArchivo(colegio_t * _colegio);
+int Contar(colegio_t * lista);
 
 int main()
 {
@@ -158,6 +166,7 @@ int main()
                         _colegio = NULL;
                     break;
                 case OP_SALIR:
+                    GuardarArchivo(_colegio);
                     BorrarLista(_colegio, LISTA_COLEGIO);
                     salir = true;
                     break;
@@ -608,6 +617,7 @@ void ModificarPonderacion(evaluacion_t * evaluacion)
         valorValido = true;
         printf("Introducí la ponderación de " CELESTE NEGRITA SUBRAYADO "%s" RESET "en formato float (ej: 0.1 = 10%%)\n", evaluacion->nombre);
         scanf("%f", &ponderacion);
+        LimpiarTeclado();
         if ((ponderacion < MIN_PONDERACION) || (ponderacion > MAX_PONDERACION))
         {
             printf(ROJO "La ponderación debe estar entre 0 y 1\n" RESET);
@@ -817,4 +827,76 @@ void LimpiarPantalla()
     #else
         system("clear"); // Limpiar pantalla en Unix/Linux
     #endif
+}
+
+void GuardarArchivo(colegio_t * _colegio)
+{
+    FILE * fp = fopen("datos.bin", "wb");
+    int cantidadColegios = Contar(_colegio);
+    fwrite(&cantidadColegios, sizeof(int), 1, fp);
+    while (_colegio != NULL)
+    {
+        fwrite(_colegio->nombre, sizeof(char), MAX_CHAR, fp);
+        
+        curso_t * _curso = _colegio->_curso;
+        int cantidadCursos = Contar((colegio_t *) _curso);
+        fwrite(&cantidadCursos, sizeof(int), 1, fp);
+        while (_curso != NULL)
+        {
+            fwrite(_curso->nombre, sizeof(char), MAX_CHAR, fp);
+            
+            materia_t * _materia = _curso->_materia;
+            int cantidadMaterias = Contar((colegio_t *) _materia);
+            fwrite(&cantidadMaterias, sizeof(int), 1, fp);
+            while (_materia != NULL)
+            {
+                fwrite(_materia->nombre, sizeof(char), MAX_CHAR, fp);
+                
+                evaluacion_t * _evaluacion = _materia->_evaluacion;
+                int cantidadEvaluaciones = Contar((colegio_t *) _evaluacion);
+                fwrite(&cantidadEvaluaciones, sizeof(int), 1, fp);
+                while (_evaluacion != NULL)
+                {
+                    fwrite(_evaluacion->nombre, sizeof(char), MAX_CHAR, fp);
+                    fwrite(&(_evaluacion->ponderacion), sizeof(float), 1, fp);
+                    
+                    nota_t * _nota = _evaluacion->_nota;
+                    int cantidadNotas = Contar((colegio_t *) _nota);
+                    fwrite(&cantidadNotas, sizeof(int), 1, fp);
+                    while (_nota != NULL)
+                    {
+                        fwrite(&(_nota->id), sizeof(int), 1, fp);
+                        fwrite(&(_nota->valor), sizeof(float), 1, fp);
+                        _nota = _nota->next;
+                    }
+                    _evaluacion = _evaluacion->next;
+                }
+                _materia = _materia->next;
+            }
+            
+            alumno_t * _alumno = _curso->_alumno;
+            int cantidadAlumnos = Contar((colegio_t *) _alumno);
+            fwrite(&cantidadAlumnos, sizeof(int), 1, fp);
+            while (_alumno != NULL)
+            {
+                fwrite(_alumno->nombre, sizeof(char), MAX_CHAR, fp);
+                fwrite(&(_alumno->id), sizeof(int), 1, fp);
+                fwrite(&(_alumno->promedio), sizeof(float), 1, fp);
+                _alumno = _alumno->next;
+            }
+            _curso = _curso->next;
+        }
+        _colegio = _colegio->next;
+    }
+}
+
+int Contar(colegio_t * lista)
+{
+    int cantidad=0;
+    while (lista != NULL)
+    {
+        cantidad++;
+        lista = lista->next;
+    }
+    return cantidad;
 }
