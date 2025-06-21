@@ -99,11 +99,13 @@ int PedirUbicacion(int cantidad);
 
 void ModificarPonderacion(evaluacion_t * evaluacion);
 nota_t * AgregarNota(nota_t * _nota, alumno_t * _alumno);
-int ImprimirNotas(nota_t * _nota, alumno_t * _alumno);
-float PedirNota(void);
+int ImprimirNotas(nota_t * _nota, alumno_t * _alumno, bool soloNotas);
+float PedirNota();
+nota_t * EliminarNota(nota_t * _nota, alumno_t * _alumno);
 
 void * BorrarElemento(colegio_t * lista, int tipo);
 void BorrarLista(colegio_t * lista, int tipo);
+void BorrarNotasID(int id, materia_t * _materia);
 void BorrarNotas(evaluacion_t * evaluacion);
 void BorrarEvaluaciones(materia_t * materia);
 void BorrarMaterias(curso_t * curso);
@@ -322,7 +324,7 @@ void MenuCurso(curso_t * curso)
                     _alumno = (alumno_t *) Agregar((colegio_t *) _alumno, LISTA_ALUMNO);
                     break;
                 case OP_ELIMINAR_2:
-                    _alumno = (alumno_t *) BorrarElemento((colegio_t *) _alumno, LISTA_ALUMNO);
+                    _alumno = (alumno_t *) BorrarElemento((colegio_t *) curso, LISTA_ALUMNO);
                     break;
                 case OP_VACIAR_2:
                         BorrarLista((colegio_t *) _alumno, LISTA_ALUMNO);
@@ -445,7 +447,7 @@ void MenuEvaluacion(evaluacion_t * evaluacion, alumno_t * _alumno)
                     _nota = AgregarNota(_nota, _alumno);
                     break;
                 case OP_ELIMINAR:
-                    
+                    _nota = EliminarNota(_nota, _alumno);
                     break;
                 case OP_VACIAR:
                         BorrarLista((colegio_t *) _nota, LISTA_NOTA);
@@ -628,7 +630,7 @@ nota_t * AgregarNota(nota_t * _nota, alumno_t * _alumno)
     else
     {
         nota_t * notaAux = _nota;
-        int cantidad = ImprimirNotas(_nota, _alumno);
+        int cantidad = ImprimirNotas(_nota, _alumno, false);
         int ubicacion = PedirUbicacion(cantidad);
         for (int i=0; i<ubicacion; i++)
         {
@@ -650,22 +652,29 @@ nota_t * AgregarNota(nota_t * _nota, alumno_t * _alumno)
     return _nota;
 }
 
-int ImprimirNotas(nota_t * _nota, alumno_t * _alumno)
+int ImprimirNotas(nota_t * _nota, alumno_t * _alumno, bool soloNotas)
 {
     int tamanio = 0;
     while (_alumno != NULL)
     {
-        printf("%i - %s", (tamanio+1), _alumno->nombre);
+        bool hayNota = false;
         nota_t * listaNotas = _nota; //Se usa esta lista auxiliar para no perder el inicio de la lista
-        while (listaNotas != NULL)
+        while ((listaNotas != NULL) && (!hayNota))
         {
             if (listaNotas->id == _alumno->id)
-                printf("%.2f", listaNotas->valor);
-            listaNotas = listaNotas->next;
+                hayNota = true;
+            else
+                listaNotas = listaNotas->next;
         }
-        printf("\n");
+        if ((!soloNotas) || (hayNota))
+        {
+            printf("%i - %s", (tamanio+1), _alumno->nombre);
+            if (hayNota)
+                printf("%.2f", listaNotas->valor);
+            printf("\n");
+            tamanio++;
+        }
         _alumno = _alumno->next;
-        tamanio++;
     }
     return tamanio;
 }
@@ -689,8 +698,57 @@ float PedirNota(void)
     return valor;
 }
 
+nota_t * EliminarNota(nota_t * _nota, alumno_t * _alumno) //REVISAR
+{
+    if ((_alumno == NULL) || (_nota == NULL))
+    {
+        if (_alumno == NULL)
+            printf("No hay alumnos guardados");
+        else
+            printf("No hay notas guardadas");
+        getchar();
+    }
+    else
+    {
+        nota_t * notaEliminar;
+        int cantidad = ImprimirNotas(_nota, _alumno, true);
+        int ubicacion = PedirUbicacion(cantidad);
+        while (ubicacion >= 0)
+        {
+            notaEliminar = _nota;
+            while ((notaEliminar != NULL) && (notaEliminar->id != _alumno->id))
+                notaEliminar = notaEliminar->next;
+            if (notaEliminar->id != _alumno->id)
+                ubicacion--;
+            _alumno = _alumno->next;
+        }
+        if (_nota == notaEliminar)
+        {
+            _nota = notaEliminar->next;
+        }
+        else
+        {
+            nota_t * aux = _nota;
+            while (aux->next != notaEliminar)
+            {
+                aux = aux->next;
+            }
+            aux->next = aux->next->next;
+        }
+        free(notaEliminar);
+    }
+    return _nota;
+}
+
 void * BorrarElemento(colegio_t * lista, int tipo)
 {
+    //Si se debe eliminar un alumno, se recibe igual una lista de curso para acceder a las notas del alumno y borrarlas
+    materia_t * _materia = ((curso_t *) lista)->_materia;
+    if (tipo == LISTA_ALUMNO)
+    {
+        lista = (colegio_t *) ((curso_t *) lista)->_alumno;
+    }
+    
     colegio_t * elemento = lista;
     colegio_t * previo;
     
@@ -721,6 +779,9 @@ void * BorrarElemento(colegio_t * lista, int tipo)
             break;
         case LISTA_EVALUACION:
             BorrarNotas((evaluacion_t *) elemento);
+            break;
+        case LISTA_ALUMNO:
+            BorrarNotasID(((alumno_t *) elemento)->id, _materia);
             break;
     }
     free(elemento);
@@ -787,6 +848,41 @@ void BorrarLista(colegio_t * lista, int tipo)
     }
 }
 
+void BorrarNotasID(int id, materia_t * _materia)
+{
+    printf("debug 1\n");
+    while (_materia != NULL)
+    {
+        evaluacion_t * _evaluacion = _materia->_evaluacion;
+        while (_evaluacion != NULL)
+        {
+            nota_t * _nota = _evaluacion->_nota;
+            while ((_nota != NULL) && (_nota->id == id))
+            {
+                _evaluacion->_nota = _nota->next;
+                free(_nota);
+                _nota = _evaluacion->_nota;
+            }
+            while (_nota != NULL)
+            {
+                if (_nota->id == id)
+                {
+                    nota_t * eliminar = _nota;
+                    _nota = _nota->next;
+                    free(eliminar);
+                }
+                else
+                {
+                    _nota = _nota->next;
+                }
+            }
+            
+            _evaluacion = _evaluacion->next;
+        }
+        _materia = _materia->next;
+    }
+}
+
 void BorrarNotas(evaluacion_t * evaluacion)
 {
     BorrarLista((colegio_t *) (evaluacion->_nota), LISTA_NOTA);
@@ -804,6 +900,19 @@ void BorrarMaterias(curso_t * curso)
 
 void BorrarAlumnos(curso_t * curso)
 {
+    //Se deben borrar todas las notas si se borran los alumnos
+    materia_t * _materia = curso->_materia;
+    while (_materia != NULL)
+    {
+        evaluacion_t * _evaluacion = _materia->_evaluacion;
+        while (_evaluacion != NULL)
+        {
+            BorrarNotas(_evaluacion);
+            _evaluacion = _evaluacion->next;
+        }
+        _materia = _materia->next;
+    }
+    
     BorrarLista((colegio_t *) (curso->_alumno), LISTA_ALUMNO);
 }
 
