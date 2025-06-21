@@ -39,7 +39,6 @@ typedef struct alumno
     char nombre[MAX_CHAR];
     
     int id;
-    float promedio;
 }alumno_t;
 
 typedef struct nota
@@ -115,10 +114,11 @@ void LimpiarTeclado();
 void LimpiarPantalla();
 void GuardarArchivo(colegio_t * _colegio);
 int Contar(colegio_t * lista);
+colegio_t * LeerArchivo();
 
 int main()
 {
-    colegio_t * _colegio = NULL;
+    colegio_t * _colegio = LeerArchivo();
     bool salir = false;
     
     while (!salir)
@@ -410,15 +410,6 @@ void MenuMateria(materia_t * materia, alumno_t * _alumno)
 
 void MenuEvaluacion(evaluacion_t * evaluacion, alumno_t * _alumno)
 {
-    /*
-    typedef struct evaluacion
-{
-    char nombre[MAX_CHAR];
-    struct evaluacion * next;
-    float ponderacion;
-    nota_t * _nota;
-}evaluacion_t;
-    */
     bool salir = false;
     nota_t * _nota = evaluacion->_nota;
     
@@ -629,25 +620,33 @@ void ModificarPonderacion(evaluacion_t * evaluacion)
 
 nota_t * AgregarNota(nota_t * _nota, alumno_t * _alumno)
 {
-    nota_t * notaAux = _nota;
-    int cantidad = ImprimirNotas(_nota, _alumno);
-    int ubicacion = PedirUbicacion(cantidad);
-    for (int i=0; i<ubicacion; i++)
+    if (_alumno == NULL)
     {
-        _alumno = _alumno->next;
+        printf("No hay alumnos guardados");
+        getchar();
     }
-    while ((notaAux != NULL) && (notaAux->id != _alumno->id))
+    else
     {
-        notaAux = notaAux->next;
+        nota_t * notaAux = _nota;
+        int cantidad = ImprimirNotas(_nota, _alumno);
+        int ubicacion = PedirUbicacion(cantidad);
+        for (int i=0; i<ubicacion; i++)
+        {
+            _alumno = _alumno->next;
+        }
+        while ((notaAux != NULL) && (notaAux->id != _alumno->id))
+        {
+            notaAux = notaAux->next;
+        }
+        if (notaAux == NULL)
+        {
+            notaAux = _nota;
+            _nota = (nota_t *) malloc(sizeof(nota_t));
+            _nota->next = notaAux;
+            _nota->id = _alumno->id;
+        }
+        _nota->valor = PedirNota();
     }
-    if (notaAux == NULL)
-    {
-        notaAux = _nota;
-        _nota = (nota_t *) malloc(sizeof(nota_t));
-        _nota->next = notaAux;
-        _nota->id = _alumno->id;
-    }
-    _nota->valor = PedirNota();
     return _nota;
 }
 
@@ -881,7 +880,6 @@ void GuardarArchivo(colegio_t * _colegio)
             {
                 fwrite(_alumno->nombre, sizeof(char), MAX_CHAR, fp);
                 fwrite(&(_alumno->id), sizeof(int), 1, fp);
-                fwrite(&(_alumno->promedio), sizeof(float), 1, fp);
                 _alumno = _alumno->next;
             }
             _curso = _curso->next;
@@ -899,4 +897,172 @@ int Contar(colegio_t * lista)
         lista = lista->next;
     }
     return cantidad;
+}
+
+colegio_t * LeerArchivo()
+{
+    colegio_t * _colegio = NULL;
+    FILE *fp = fopen("datos.bin", "rb");
+    if (fp != NULL)
+    {
+        int cantidadColegios;
+        fread(&cantidadColegios, sizeof(int), 1, fp);
+        while (cantidadColegios > 0)
+        {
+            colegio_t * nuevoColegio = (colegio_t *) malloc(sizeof(colegio_t));
+            nuevoColegio->next = NULL;
+            if (_colegio == NULL)
+            {
+                _colegio = nuevoColegio;
+            }
+            else
+            {
+                colegio_t * aux = _colegio;
+                while (aux->next != NULL)
+                {
+                    aux = aux->next;
+                }
+                aux->next = nuevoColegio;
+            }
+            
+            fread(nuevoColegio->nombre, sizeof(char), MAX_CHAR, fp);
+            
+            curso_t * _curso = NULL;
+            int cantidadCursos;
+            fread(&cantidadCursos, sizeof(int), 1, fp);
+            while (cantidadCursos > 0)
+            {
+                curso_t * nuevoCurso = (curso_t *) malloc(sizeof(curso_t));
+                nuevoCurso->next = NULL;
+                if (_curso == NULL)
+                {
+                    _curso = nuevoCurso;
+                }
+                else
+                {
+                    curso_t * aux = _curso;
+                    while (aux->next != NULL)
+                    {
+                        aux = aux->next;
+                    }
+                    aux->next = nuevoCurso;
+                }
+                
+                fread(nuevoCurso->nombre, sizeof(char), MAX_CHAR, fp);
+                
+                materia_t * _materia = NULL;
+                int cantidadMaterias;
+                fread(&cantidadMaterias, sizeof(int), 1, fp);
+                while (cantidadMaterias > 0)
+                {
+                    materia_t * nuevaMateria = (materia_t *) malloc(sizeof(materia_t));
+                    nuevaMateria->next = NULL;
+                    if (_materia == NULL)
+                    {
+                        _materia = nuevaMateria;
+                    }
+                    else
+                    {
+                        materia_t * aux = _materia;
+                        while (aux->next != NULL)
+                        {
+                            aux = aux->next;
+                        }
+                        aux->next = nuevaMateria;
+                    }
+                    
+                    fread(nuevaMateria->nombre, sizeof(char), MAX_CHAR, fp);
+                    
+                    evaluacion_t * _evaluacion = NULL;
+                    int cantidadEvaluaciones;
+                    fread(&cantidadEvaluaciones, sizeof(int), 1, fp);
+                    while (cantidadEvaluaciones > 0)
+                    {
+                        evaluacion_t * nuevaEvaluacion = (evaluacion_t *) malloc(sizeof(evaluacion_t));
+                        nuevaEvaluacion->next = NULL;
+                        if (_evaluacion == NULL)
+                        {
+                            _evaluacion = nuevaEvaluacion;
+                        }
+                        else
+                        {
+                            evaluacion_t * aux = _evaluacion;
+                            while (aux->next != NULL)
+                            {
+                                aux = aux->next;
+                            }
+                            aux->next = nuevaEvaluacion;
+                        }
+                        
+                        fread(nuevaEvaluacion->nombre, sizeof(char), MAX_CHAR, fp);
+                        fread(&(nuevaEvaluacion->ponderacion), sizeof(float), 1, fp);
+                        
+                        nota_t * _nota = NULL;
+                        int cantidadNotas;
+                        fread(&cantidadNotas, sizeof(int), 1, fp);
+                        while (cantidadNotas > 0)
+                        {
+                            nota_t * nuevaNota = (nota_t *) malloc(sizeof(nota_t));
+                            nuevaNota->next = NULL;
+                            if (_nota == NULL)
+                            {
+                                _nota = nuevaNota;
+                            }
+                            else
+                            {
+                                nota_t * aux = _nota;
+                                while (aux->next != NULL)
+                                {
+                                    aux = aux->next;
+                                }
+                                aux->next = nuevaNota;
+                            }
+                            
+                            fread(&(nuevaNota->id), sizeof(int), 1, fp);
+                            fread(&(nuevaNota->valor), sizeof(float), 1, fp);
+                            
+                            cantidadNotas--;
+                        }
+                        nuevaEvaluacion->_nota = _nota;
+                        cantidadEvaluaciones--;
+                    }
+                    nuevaMateria->_evaluacion = _evaluacion;
+                    cantidadMaterias--;
+                }
+                nuevoCurso->_materia = _materia;
+                
+                alumno_t * _alumno = NULL;
+                int cantidadAlumnos;
+                fread(&cantidadAlumnos, sizeof(int), 1, fp);
+                while (cantidadAlumnos > 0)
+                {
+                    alumno_t * nuevoAlumno = (alumno_t *) malloc(sizeof(alumno_t));
+                    nuevoAlumno->next = NULL;
+                    if (_alumno == NULL)
+                    {
+                        _alumno = nuevoAlumno;
+                    }
+                    else
+                    {
+                        alumno_t * aux = _alumno;
+                        while (aux->next != NULL)
+                        {
+                            aux = aux->next;
+                        }
+                        aux->next = nuevoAlumno;
+                    }
+                    
+                    fread(nuevoAlumno->nombre, sizeof(char), MAX_CHAR, fp);
+                    fread(&(nuevoAlumno->id), sizeof(int), 1, fp);
+                    
+                    cantidadAlumnos--;
+                }
+                nuevoCurso->_alumno = _alumno;
+                cantidadCursos--;
+            }
+            nuevoColegio->_curso = _curso;
+            cantidadColegios--;
+        }
+    }
+    return _colegio;
 }
