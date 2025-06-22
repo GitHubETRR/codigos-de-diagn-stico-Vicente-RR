@@ -102,6 +102,7 @@ nota_t * AgregarNota(nota_t * _nota, alumno_t * _alumno);
 int ImprimirNotas(nota_t * _nota, alumno_t * _alumno, bool soloNotas);
 float PedirNota();
 nota_t * EliminarNota(nota_t * _nota, alumno_t * _alumno);
+nota_t * TieneNota(nota_t * _nota, int id);
 
 void * BorrarElemento(colegio_t * lista, int tipo);
 void BorrarLista(colegio_t * lista, int tipo);
@@ -657,19 +658,14 @@ int ImprimirNotas(nota_t * _nota, alumno_t * _alumno, bool soloNotas)
     int tamanio = 0;
     while (_alumno != NULL)
     {
-        bool hayNota = false;
-        nota_t * listaNotas = _nota; //Se usa esta lista auxiliar para no perder el inicio de la lista
-        while ((listaNotas != NULL) && (!hayNota))
-        {
-            if (listaNotas->id == _alumno->id)
-                hayNota = true;
-            else
-                listaNotas = listaNotas->next;
-        }
-        if ((!soloNotas) || (hayNota))
+        bool tieneNota = true;
+        nota_t * listaNotas = TieneNota(_nota, _alumno->id); //lista auxiliar para no perder el inicio
+        if (listaNotas == NULL)
+            tieneNota = false;
+        if ((!soloNotas) || tieneNota)
         {
             printf("%i - %s", (tamanio+1), _alumno->nombre);
-            if (hayNota)
+            if (tieneNota)
                 printf("%.2f", listaNotas->valor);
             printf("\n");
             tamanio++;
@@ -698,7 +694,7 @@ float PedirNota(void)
     return valor;
 }
 
-nota_t * EliminarNota(nota_t * _nota, alumno_t * _alumno) //REVISAR
+nota_t * EliminarNota(nota_t * _nota, alumno_t * _alumno)
 {
     if ((_alumno == NULL) || (_nota == NULL))
     {
@@ -715,13 +711,12 @@ nota_t * EliminarNota(nota_t * _nota, alumno_t * _alumno) //REVISAR
         int ubicacion = PedirUbicacion(cantidad);
         while (ubicacion >= 0)
         {
-            notaEliminar = _nota;
-            while ((notaEliminar != NULL) && (notaEliminar->id != _alumno->id))
-                notaEliminar = notaEliminar->next;
-            if (notaEliminar->id != _alumno->id)
+            if (TieneNota(_nota, _alumno->id))
                 ubicacion--;
-            _alumno = _alumno->next;
+            if (ubicacion >= 0)
+                _alumno = _alumno->next;
         }
+        notaEliminar = TieneNota(_nota, _alumno->id);
         if (_nota == notaEliminar)
         {
             _nota = notaEliminar->next;
@@ -733,9 +728,22 @@ nota_t * EliminarNota(nota_t * _nota, alumno_t * _alumno) //REVISAR
             {
                 aux = aux->next;
             }
-            aux->next = aux->next->next;
+            aux->next = (aux->next)->next;
         }
         free(notaEliminar);
+    }
+    return _nota;
+}
+
+nota_t * TieneNota(nota_t * _nota, int id)
+{
+    bool tieneNota = false;
+    while ((_nota != NULL) && (!tieneNota))
+    {
+        if (_nota->id == id)
+            tieneNota = true;
+        else
+            _nota = _nota->next;
     }
     return _nota;
 }
@@ -850,7 +858,6 @@ void BorrarLista(colegio_t * lista, int tipo)
 
 void BorrarNotasID(int id, materia_t * _materia)
 {
-    printf("debug 1\n");
     while (_materia != NULL)
     {
         evaluacion_t * _evaluacion = _materia->_evaluacion;
@@ -886,16 +893,19 @@ void BorrarNotasID(int id, materia_t * _materia)
 void BorrarNotas(evaluacion_t * evaluacion)
 {
     BorrarLista((colegio_t *) (evaluacion->_nota), LISTA_NOTA);
+    evaluacion->_nota = NULL;
 }
 
 void BorrarEvaluaciones(materia_t * materia)
 {
     BorrarLista((colegio_t *) (materia->_evaluacion), LISTA_EVALUACION);
+    materia->_evaluacion = NULL;
 }
 
 void BorrarMaterias(curso_t * curso)
 {
     BorrarLista((colegio_t *) (curso->_materia), LISTA_MATERIA);
+    curso->_materia = NULL;
 }
 
 void BorrarAlumnos(curso_t * curso)
@@ -914,11 +924,13 @@ void BorrarAlumnos(curso_t * curso)
     }
     
     BorrarLista((colegio_t *) (curso->_alumno), LISTA_ALUMNO);
+    curso->_alumno = NULL;
 }
 
 void BorrarCursos(colegio_t * colegio)
 {
     BorrarLista((colegio_t *) (colegio->_curso), LISTA_CURSO);
+    colegio->_curso = NULL;
 }
 
 void LimpiarTeclado()
