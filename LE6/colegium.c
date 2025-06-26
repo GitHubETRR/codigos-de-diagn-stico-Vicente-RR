@@ -9,6 +9,7 @@
 #define MAX_NOTA 10.0
 #define MIN_PONDERACION 0.0
 #define MAX_PONDERACION 1.0
+#define REDONDEO 0.5
 
 #define OP_NOMBRE '0'
 #define OP_SELECCIONAR '1'
@@ -24,6 +25,10 @@
 #define OP_SALIR_2 '9'
 
 #define OP_MODIFICAR '1'
+
+#define OP_VER '1'
+
+#define SIN_NOTAS -1
 
 #define LISTA_COLEGIO 1
 #define LISTA_CURSO 2
@@ -313,7 +318,7 @@ void MenuCurso(curso_t * curso)
                     if (seleccionAlumno != NULL)
                     {
                         LimpiarPantalla();
-                        MenuAlumno(seleccionAlumno, curso->_materia);
+                        MenuAlumno(seleccionAlumno, _materia);
                     }
                     else
                     {
@@ -469,7 +474,55 @@ void MenuEvaluacion(evaluacion_t * evaluacion, alumno_t * _alumno)
 
 void MenuAlumno(alumno_t * alumno, materia_t * _materia)
 {
+    bool salir = false;
     
+    while (!salir)
+    {
+        char opcion;
+        bool opcionValida;
+        
+        printf(VERDE NEGRITA SUBRAYADO "Alumno: %s\n" RESET, alumno->nombre);
+        printf(VERDE NEGRITA);
+        printf("%c. Cambiar nombre\n", OP_NOMBRE);
+        printf("%c. Ver notas\n", OP_VER);
+        printf("%c. Modificar notas\n", OP_AGREGAR);
+        printf("%c. Eliminar nota\n", OP_ELIMINAR);
+        printf("%c. Vaciar notas\n", OP_VACIAR);
+        printf("%c. Salir\n", OP_SALIR);
+        printf(RESET);
+        do
+        {
+            opcionValida = true;
+            scanf("%c", &opcion);
+            LimpiarTeclado();
+            
+            switch (opcion)
+            {
+                case OP_NOMBRE:
+                    CambiarNombre(alumno->nombre);
+                    break;
+                case OP_VER:
+                    NotasAlumno(alumno, _materia, OP_VER);
+                    break;
+                case OP_AGREGAR:
+                    NotasAlumno(alumno, _materia, OP_AGREGAR);
+                    break;
+                case OP_ELIMINAR:
+                    NotasAlumno(alumno, _materia, OP_ELIMINAR);
+                    break;
+                case OP_VACIAR:
+                    break;
+                case OP_SALIR:
+                    evaluacion->_nota = _nota;
+                    salir = true;
+                    break;
+                default:
+                    opcionValida = false;
+                    printf("Opción no válida\n");
+            }
+        } while (!opcionValida);
+        LimpiarPantalla();
+    }
 }
 
 void CambiarNombre(char nombre[MAX_CHAR])
@@ -746,6 +799,62 @@ nota_t * TieneNota(nota_t * _nota, int id)
             _nota = _nota->next;
     }
     return _nota;
+}
+
+void NotasAlumno(alumno_t * alumno, materia_t * _materia, char opcion)
+{
+    int id = alumno->id;
+    printf(VERDE NEGRITA SUBRAYADO "Alumno: %s\n" RESET, alumno->nombre);
+    if (opcion == OP_VER)
+        printf(CELESTE NEGRITA "Promedio: " SUBRAYADO "%f\n" RESET, CalcularPromedio(id, _materia));
+    
+    
+}
+
+float CalcularPromedio(int id, _materia);
+{
+    float promedio = 0.0;
+    int cantidadMaterias = 0;
+    int sumaNotas = 0;
+    while (_materia != NULL)
+    {
+        int sumar = CalcularPromedioMateria(id, _materia->_evaluacion);
+        if (sumar != SIN_NOTAS)
+        {
+            sumaNotas += sumar;
+            cantidadMaterias++;
+        }
+        _materia = _materia->next;
+    }
+    if (cantidadMaterias > 0)
+    {
+        promedio = ((float) sumar) / cantidadMaterias;
+    }
+    return promedio;
+}
+
+int CalcularPromedioMateria(int id, evaluacion_t * _evaluacion)
+{
+    float promedio;
+    int cantidadEvaluaciones = 0;
+    float sumaPonderacion = 0.0;
+    float sumaNotas = 0.0;
+    while (_evluacion != NULL)
+    {
+        nota_t * nota = TieneNota(_evaluacion->_nota, id);
+        if (nota != NULL)
+        {
+            float ponderacion = _evaluacion->ponderacion;
+            sumaPonderacion += ponderacion;
+            sumaNotas += nota->valor * ponderacion;
+            cantidadEvaluaciones++;
+        }
+        _evaluacion = _evaluacion->next;
+    }
+    promedio = sumaNotas / sumaPonderacion;
+    if ((promedio - (int) promedio) >= REDONDEO)
+        promedio += REDONDEO;
+    return (int) promedio;
 }
 
 void * BorrarElemento(colegio_t * lista, int tipo)
