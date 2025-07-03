@@ -10,6 +10,7 @@
 #define MIN_PONDERACION 0.0
 #define MAX_PONDERACION 1.0
 #define REDONDEO 0.5
+#define PONDERACION_DEFAULT 1.0
 
 #define OP_NOMBRE '0'
 #define OP_SELECCIONAR '1'
@@ -29,6 +30,7 @@
 #define OP_VER '1'
 
 #define SIN_NOTAS -1
+#define NOTA_APROBADA 7
 
 #define LISTA_COLEGIO 1
 #define LISTA_CURSO 2
@@ -108,6 +110,10 @@ int ImprimirNotas(nota_t * _nota, alumno_t * _alumno, bool soloNotas);
 float PedirNota();
 nota_t * EliminarNota(nota_t * _nota, alumno_t * _alumno);
 nota_t * TieneNota(nota_t * _nota, int id);
+
+void NotasAlumno(alumno_t * alumno, materia_t * _materia, char opcion);
+float CalcularPromedio(int id, materia_t * _materia);
+int CalcularPromedioMateria(int id, evaluacion_t * _evaluacion);
 
 void * BorrarElemento(colegio_t * lista, int tipo);
 void BorrarLista(colegio_t * lista, int tipo);
@@ -513,7 +519,6 @@ void MenuAlumno(alumno_t * alumno, materia_t * _materia)
                 case OP_VACIAR:
                     break;
                 case OP_SALIR:
-                    evaluacion->_nota = _nota;
                     salir = true;
                     break;
                 default:
@@ -573,6 +578,8 @@ void * Agregar(colegio_t * lista, int tipo)
             break;
     }
     colegio_t * nuevo = (colegio_t *) malloc(tamanio);
+    if (tipo == LISTA_EVALUACION)
+        ((evaluacion_t *) nuevo)->ponderacion = PONDERACION_DEFAULT;
     if (tipo == LISTA_ALUMNO)
         AgregarID((alumno_t *) nuevo, (alumno_t *) lista);
     int ubicacion = 0;
@@ -683,13 +690,15 @@ nota_t * AgregarNota(nota_t * _nota, alumno_t * _alumno)
     }
     else
     {
-        nota_t * notaAux = _nota;
+        
         int cantidad = ImprimirNotas(_nota, _alumno, false);
         int ubicacion = PedirUbicacion(cantidad);
         for (int i=0; i<ubicacion; i++)
         {
             _alumno = _alumno->next;
         }
+        
+        nota_t * notaAux = _nota;
         while ((notaAux != NULL) && (notaAux->id != _alumno->id))
         {
             notaAux = notaAux->next;
@@ -804,14 +813,64 @@ nota_t * TieneNota(nota_t * _nota, int id)
 void NotasAlumno(alumno_t * alumno, materia_t * _materia, char opcion)
 {
     int id = alumno->id;
+    int tamanio = 1;
+    LimpiarPantalla();
     printf(VERDE NEGRITA SUBRAYADO "Alumno: %s\n" RESET, alumno->nombre);
     if (opcion == OP_VER)
-        printf(CELESTE NEGRITA "Promedio: " SUBRAYADO "%f\n" RESET, CalcularPromedio(id, _materia));
-    
-    
+        printf(CELESTE NEGRITA "Promedio: " SUBRAYADO "%.2f\n" RESET, CalcularPromedio(id, _materia));
+    while (_materia != NULL)
+    {
+        evaluacion_t * _evaluacion = _materia->_evaluacion;
+        printf(VIOLETA NEGRITA "%s" RESET, _materia->nombre);
+        if (opcion == OP_VER)
+        {
+            int notaMateria = CalcularPromedioMateria(id, _evaluacion);
+            if (notaMateria != SIN_NOTAS)
+            {
+                if (notaMateria >= NOTA_APROBADA)
+                    printf(VERDE);
+                else
+                    printf(ROJO);
+                printf(NEGRITA SUBRAYADO "%i\n" RESET, notaMateria);
+            }
+        }
+        
+        while (_evaluacion != NULL)
+        {
+            nota_t * nota = TieneNota(_evaluacion->_nota, id);
+            printf("\t");
+            if ((opcion == OP_AGREGAR) || ((opcion == OP_ELIMINAR) && (nota != NULL)))
+            {
+                printf("%i - ", tamanio);
+                tamanio++;
+            }
+            printf(AZUL NEGRITA "%s" RESET, _evaluacion->nombre);
+            if (nota != NULL)
+            {
+                float valor = nota->valor;
+                if (valor >= (float) NOTA_APROBADA)
+                    printf(VERDE);
+                else
+                    printf(ROJO);
+                printf("\t" SUBRAYADO "%.2f\n" RESET, valor);
+            }
+            _evaluacion = _evaluacion->next;
+        }
+        _materia = _materia->next;
+    }
+    if (opcion == OP_VER)
+        getchar();
+    else
+    {
+        int seleccion = PedirUbicacion(tamanio);
+        if (opcion == OP_AGREGAR)
+        {
+            AgregarNotaAlumno
+        }
+    }
 }
 
-float CalcularPromedio(int id, _materia);
+float CalcularPromedio(int id, materia_t * _materia)
 {
     float promedio = 0.0;
     int cantidadMaterias = 0;
@@ -828,7 +887,7 @@ float CalcularPromedio(int id, _materia);
     }
     if (cantidadMaterias > 0)
     {
-        promedio = ((float) sumar) / cantidadMaterias;
+        promedio = ((float) sumaNotas) / cantidadMaterias;
     }
     return promedio;
 }
@@ -836,10 +895,9 @@ float CalcularPromedio(int id, _materia);
 int CalcularPromedioMateria(int id, evaluacion_t * _evaluacion)
 {
     float promedio;
-    int cantidadEvaluaciones = 0;
     float sumaPonderacion = 0.0;
     float sumaNotas = 0.0;
-    while (_evluacion != NULL)
+    while (_evaluacion != NULL)
     {
         nota_t * nota = TieneNota(_evaluacion->_nota, id);
         if (nota != NULL)
@@ -847,14 +905,30 @@ int CalcularPromedioMateria(int id, evaluacion_t * _evaluacion)
             float ponderacion = _evaluacion->ponderacion;
             sumaPonderacion += ponderacion;
             sumaNotas += nota->valor * ponderacion;
-            cantidadEvaluaciones++;
         }
         _evaluacion = _evaluacion->next;
     }
-    promedio = sumaNotas / sumaPonderacion;
+    if (sumaPonderacion > 0.0)
+        promedio = sumaNotas / sumaPonderacion;
+    else
+        promedio = SIN_NOTAS;
     if ((promedio - (int) promedio) >= REDONDEO)
         promedio += REDONDEO;
+        
     return (int) promedio;
+}
+
+void AgregarNotaAlumno(int id, materia_t * _materia, int seleccion)
+{
+    while (seleccion > 0)
+    {
+        while (_materia != NULL)
+        {
+            evaluacion_t * _evaluacion = _materia->_evaluacion;
+            
+        }
+        seleccion--;
+    }
 }
 
 void * BorrarElemento(colegio_t * lista, int tipo)
