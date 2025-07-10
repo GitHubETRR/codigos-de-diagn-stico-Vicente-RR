@@ -107,6 +107,7 @@ int PedirUbicacion(int cantidad);
 void ModificarPonderacion(evaluacion_t * evaluacion);
 nota_t * AgregarNota(nota_t * _nota, alumno_t * _alumno);
 int ImprimirNotas(nota_t * _nota, alumno_t * _alumno, bool soloNotas);
+nota_t * AgregarNotaLista(nota_t * _nota, int id);
 float PedirNota();
 nota_t * EliminarNota(nota_t * _nota, alumno_t * _alumno);
 nota_t * TieneNota(nota_t * _nota, int id);
@@ -114,6 +115,7 @@ nota_t * TieneNota(nota_t * _nota, int id);
 void NotasAlumno(alumno_t * alumno, materia_t * _materia, char opcion);
 float CalcularPromedio(int id, materia_t * _materia);
 int CalcularPromedioMateria(int id, evaluacion_t * _evaluacion);
+void AgregarNotaAlumno(int id, materia_t * _materia, int seleccion);
 
 void * BorrarElemento(colegio_t * lista, int tipo);
 void BorrarLista(colegio_t * lista, int tipo);
@@ -698,19 +700,8 @@ nota_t * AgregarNota(nota_t * _nota, alumno_t * _alumno)
             _alumno = _alumno->next;
         }
         
-        nota_t * notaAux = _nota;
-        while ((notaAux != NULL) && (notaAux->id != _alumno->id))
-        {
-            notaAux = notaAux->next;
-        }
-        if (notaAux == NULL)
-        {
-            notaAux = _nota;
-            _nota = (nota_t *) malloc(sizeof(nota_t));
-            _nota->next = notaAux;
-            _nota->id = _alumno->id;
-        }
-        _nota->valor = PedirNota();
+        _nota = AgregarNotaLista(_nota, _alumno->id);
+        
     }
     return _nota;
 }
@@ -735,6 +726,22 @@ int ImprimirNotas(nota_t * _nota, alumno_t * _alumno, bool soloNotas)
         _alumno = _alumno->next;
     }
     return tamanio;
+}
+
+nota_t * AgregarNotaLista(nota_t * _nota, int id)
+{
+    nota_t * notaAux = TieneNota(_nota, id);
+    if (notaAux == NULL)
+    {
+        notaAux = _nota;
+        _nota = (nota_t *) malloc(sizeof(nota_t));
+        _nota->next = notaAux;
+        _nota->id = id;
+        _nota->valor = PedirNota();
+    }
+    else
+        notaAux->valor = PedirNota();
+    return _nota;
 }
 
 float PedirNota(void)
@@ -812,16 +819,17 @@ nota_t * TieneNota(nota_t * _nota, int id)
 
 void NotasAlumno(alumno_t * alumno, materia_t * _materia, char opcion)
 {
+    materia_t * listaMateria = _materia;
     int id = alumno->id;
-    int tamanio = 1;
+    int tamanio = 0;
     LimpiarPantalla();
     printf(VERDE NEGRITA SUBRAYADO "Alumno: %s\n" RESET, alumno->nombre);
     if (opcion == OP_VER)
         printf(CELESTE NEGRITA "Promedio: " SUBRAYADO "%.2f\n" RESET, CalcularPromedio(id, _materia));
-    while (_materia != NULL)
+    while (listaMateria != NULL)
     {
-        evaluacion_t * _evaluacion = _materia->_evaluacion;
-        printf(VIOLETA NEGRITA "%s" RESET, _materia->nombre);
+        evaluacion_t * _evaluacion = listaMateria->_evaluacion;
+        printf(VIOLETA NEGRITA "%s" RESET, listaMateria->nombre);
         if (opcion == OP_VER)
         {
             int notaMateria = CalcularPromedioMateria(id, _evaluacion);
@@ -841,7 +849,7 @@ void NotasAlumno(alumno_t * alumno, materia_t * _materia, char opcion)
             printf("\t");
             if ((opcion == OP_AGREGAR) || ((opcion == OP_ELIMINAR) && (nota != NULL)))
             {
-                printf("%i - ", tamanio);
+                printf("%i - ", (tamanio+1));
                 tamanio++;
             }
             printf(AZUL NEGRITA "%s" RESET, _evaluacion->nombre);
@@ -856,7 +864,7 @@ void NotasAlumno(alumno_t * alumno, materia_t * _materia, char opcion)
             }
             _evaluacion = _evaluacion->next;
         }
-        _materia = _materia->next;
+        listaMateria = listaMateria->next;
     }
     if (opcion == OP_VER)
         getchar();
@@ -865,7 +873,7 @@ void NotasAlumno(alumno_t * alumno, materia_t * _materia, char opcion)
         int seleccion = PedirUbicacion(tamanio);
         if (opcion == OP_AGREGAR)
         {
-            AgregarNotaAlumno
+            AgregarNotaAlumno(id, _materia, seleccion);
         }
     }
 }
@@ -920,15 +928,22 @@ int CalcularPromedioMateria(int id, evaluacion_t * _evaluacion)
 
 void AgregarNotaAlumno(int id, materia_t * _materia, int seleccion)
 {
-    while (seleccion > 0)
+    evaluacion_t * _evaluacion = _materia->_evaluacion;
+    while ((_materia != NULL) && (seleccion != 0))
     {
-        while (_materia != NULL)
+        while ((_evaluacion != NULL) && (seleccion != 0))
         {
-            evaluacion_t * _evaluacion = _materia->_evaluacion;
-            
+            if (seleccion != 0)
+            {
+                _evaluacion = _evaluacion->next;
+                seleccion--;
+            }
         }
-        seleccion--;
+        _materia = _materia->next;
+        if (_evaluacion == NULL)
+            _evaluacion = _materia->_evaluacion;
     }
+    _evaluacion->_nota = AgregarNotaLista(_evaluacion->_nota, id);
 }
 
 void * BorrarElemento(colegio_t * lista, int tipo)
