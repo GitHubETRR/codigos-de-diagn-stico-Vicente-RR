@@ -1,21 +1,19 @@
 #include <iostream>
 #include <cmath>
 #include <cstdlib>
+#include <iomanip>
 
 using namespace std;
 
 #define CARTESIANA '1'
 #define POLAR '2'
 
-typedef enum
-{
-    CARGAR_A = 1,
-    CARGAR_B,
-    SUMAR,
-    RESTAR,
-    MULTIPLICAR,
-    DIVIDIR
-}opciones_t;
+#define CARGAR_A 1
+#define CARGAR_B 2
+#define SUMAR 3
+#define RESTAR 4
+#define MULTIPLICAR 5
+#define DIVIDIR 6
 
 class complejo
 {
@@ -26,7 +24,7 @@ class complejo
         void Guarda(float x2, float y2);
         void Cartesiana(float &x2, float &y2);
         void Polar(float &mod, float &ang);
-}
+};
 
 complejo::complejo()
 {
@@ -49,22 +47,25 @@ void complejo::Cartesiana(float &x2, float &y2)
 void complejo::Polar(float &mod, float &ang)
 {
     mod = sqrt(x*x + y*y);
-    ang = atan(y/x);
+    ang = atan(y/x) * 180 / M_PI;
 }
 
-opciones_t Menu();
+int Menu(complejo a, complejo b);
 complejo PedirDatos();
 bool PedirForma();
 void LimpiarPantalla();
+void PedirCartesiana(complejo &z);
+void PedirPolar(complejo &z);
 
 int main()
 {
-    new complejo a;
-    new complejo b;
+    complejo a;
+    complejo b;
+    bool salir = false;
     
     do
     {
-        opciones_t opcion = Menu();
+        int opcion = Menu(a, b);
         switch (opcion)
         {
             case CARGAR_A:
@@ -91,17 +92,22 @@ int main()
             break;
         }
     } while (!salir);
-    
-    delete a;
-    delete b;
 
     return 0;
 }
 
-opciones_t Menu()
+int Menu(complejo a, complejo b)
 {
-    opciones_t opcion;
+    float ax, ay, bx, by, aMod, aAng, bMod, bAng;
+    a.Cartesiana(ax, ay);
+    a.Polar(aMod, aAng);
+    b.Cartesiana(bx, by);
+    b.Polar(bMod, bAng);
+    int opcion;
     cout << "Calculadora de números complejos" << endl;
+    cout << setprecision(2);
+    cout << "A: " << ax << " + j*" << ay << " / " << aMod << " * e^j" << aAng << "°" << endl;
+    cout << "B: " << bx << " + j*" << by << " / " << bMod << " * e^j" << bAng << "°" << endl;
     cout << CARGAR_A << ". Cargar el complejo A" << endl;
     cout << CARGAR_B << ". Cargar el complejo B" << endl;
     cout << SUMAR << ". Sumar complejos A+B" << endl;
@@ -163,7 +169,14 @@ void PedirCartesiana(complejo &z)
 void PedirPolar(complejo &z)
 {
     float mod, ang, x, y;
-    
+    cout << "Ingresa el módulo" << endl;
+    cin >> mod;
+    cout << "Ingresa el ángulo (grados)" << endl;
+    cin >> ang;
+    ang *= M_PI / 180;
+    x = mod * cos(ang);
+    y = mod * sin(ang);
+    z.Guarda(x, y);
 }
 
 void LimpiarPantalla()
