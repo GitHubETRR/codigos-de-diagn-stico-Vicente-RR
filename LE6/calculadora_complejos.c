@@ -47,15 +47,68 @@ void complejo::Cartesiana(float &x2, float &y2)
 void complejo::Polar(float &mod, float &ang)
 {
     mod = sqrt(x*x + y*y);
-    ang = atan(y/x) * 180 / M_PI;
+    ang = atan2(y, x);
 }
 
+complejo operator + (complejo a, complejo b){
+    complejo res;
+    float aX, aY, bX, bY, resX, resY;
+    a.Cartesiana(aX, aY);
+    b.Cartesiana(bX, bY);
+    resX = aX + bX;
+    resY = aY + bY;
+    res.Guarda(resX, resY);
+    return res;
+};
+
+complejo operator - (complejo a, complejo b){
+    complejo res;
+    float aX, aY, bX, bY, resX, resY;
+    a.Cartesiana(aX, aY);
+    b.Cartesiana(bX, bY);
+    resX = aX - bX;
+    resY = aY - bY;
+    res.Guarda(resX, resY);
+    return res;
+};
+
+complejo operator * (complejo a, complejo b){
+    complejo res;
+    float aMod, aAng, bMod, bAng, resMod, resAng, resX, resY;
+    a.Polar(aMod, aAng);
+    b.Polar(bMod, bAng);
+    resMod = aMod * bMod;
+    resAng = aAng + bAng;
+    resX = resMod * cos(resAng);
+    resY = resMod * sin(resAng);
+    res.Guarda(resX, resY);
+    return res;
+};
+
+complejo operator / (complejo a, complejo b){
+    complejo res;
+    float aMod, aAng, bMod, bAng, resMod, resAng, resX, resY;
+    a.Polar(aMod, aAng);
+    b.Polar(bMod, bAng);
+    resMod = aMod / bMod;
+    resAng = aAng - bAng;
+    resX = resMod * cos(resAng);
+    resY = resMod * sin(resAng);
+    res.Guarda(resX, resY);
+    return res;
+};
+
 int Menu(complejo a, complejo b);
+void ImprimirComplejo(complejo z);
 complejo PedirDatos();
 bool PedirForma();
-void LimpiarPantalla();
 void PedirCartesiana(complejo &z);
 void PedirPolar(complejo &z);
+void Sumar(complejo a, complejo b);
+void Restar(complejo a, complejo b);
+void Multiplicar(complejo a, complejo b);
+void Dividir(complejo a, complejo b);
+void LimpiarPantalla();
 
 int main()
 {
@@ -73,18 +126,23 @@ int main()
             break;
             
             case CARGAR_B:
+            b = PedirDatos();
             break;
             
             case SUMAR:
+            Sumar(a, b);
             break;
             
             case RESTAR:
+            Restar(a, b);
             break;
             
             case MULTIPLICAR:
+            Multiplicar(a, b);
             break;
             
             case DIVIDIR:
+            Dividir(a, b);
             break;
             
             default:
@@ -98,16 +156,13 @@ int main()
 
 int Menu(complejo a, complejo b)
 {
-    float ax, ay, bx, by, aMod, aAng, bMod, bAng;
-    a.Cartesiana(ax, ay);
-    a.Polar(aMod, aAng);
-    b.Cartesiana(bx, by);
-    b.Polar(bMod, bAng);
     int opcion;
     cout << "Calculadora de números complejos" << endl;
-    cout << setprecision(2);
-    cout << "A: " << ax << " + j*" << ay << " / " << aMod << " * e^j" << aAng << "°" << endl;
-    cout << "B: " << bx << " + j*" << by << " / " << bMod << " * e^j" << bAng << "°" << endl;
+    cout << fixed << setprecision(2);
+    cout << "A: ";
+    ImprimirComplejo(a);
+    cout << "B: ";
+    ImprimirComplejo(b);
     cout << CARGAR_A << ". Cargar el complejo A" << endl;
     cout << CARGAR_B << ". Cargar el complejo B" << endl;
     cout << SUMAR << ". Sumar complejos A+B" << endl;
@@ -118,6 +173,15 @@ int Menu(complejo a, complejo b)
     cin >> opcion;
     LimpiarPantalla();
     return opcion;
+}
+
+void ImprimirComplejo(complejo z)
+{
+    float x, y, mod, ang;
+    z.Cartesiana(x, y);
+    z.Polar(mod, ang);
+    ang *= 180.0 / M_PI;
+    cout << x << " + j*" << y << " / " << mod << " * e^j" << ang << "°" << endl;
 }
 
 complejo PedirDatos()
@@ -177,6 +241,34 @@ void PedirPolar(complejo &z)
     x = mod * cos(ang);
     y = mod * sin(ang);
     z.Guarda(x, y);
+}
+
+void Sumar(complejo a, complejo b)
+{
+    complejo res = a + b;
+    cout << "Resultado de A+B:" << endl;
+    ImprimirComplejo(res);
+}
+
+void Restar(complejo a, complejo b)
+{
+    complejo res = a - b;
+    cout << "Resultado de A-B:" << endl;
+    ImprimirComplejo(res);
+}
+
+void Multiplicar(complejo a, complejo b)
+{
+    complejo res = a * b;
+    cout << "Resultado de A*B:" << endl;
+    ImprimirComplejo(res);
+}
+
+void Dividir(complejo a, complejo b)
+{
+    complejo res = a / b;
+    cout << "Resultado de A/B:" << endl;
+    ImprimirComplejo(res);
 }
 
 void LimpiarPantalla()
