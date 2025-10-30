@@ -26,11 +26,11 @@ def imp_columnas():
 def imp_pozo():
     if pozoDisponible:
         if len(pozo) > 0:
-            print("Pozo (P): ", pozo[-1][NUM], pozo[-1][PALO], sep='')
+            print("Pozo (", POZO, "): ", pozo[-1][NUM], pozo[-1][PALO], sep='')
         else:
             print("No hay cartas en el pozo")
     else:
-        print("Tapando el pozo (P): ", pozo[-1][NUM], pozo[-1][PALO], sep='')
+        print("Tapando el pozo (", POZO, "): ", pozo[-1][NUM], pozo[-1][PALO], sep='')
     print("Restantes en el mazo:", len(mazo))
 
 def imp_movimientos():
@@ -42,12 +42,52 @@ def imp_movimientos():
 
 def pedir_movimiento():
     movimiento = input("Ingresá tu movimiento: ")
-    if movimiento[0] == TOMAR and len(mazo) > 0 and pozoDisponible):
+    mov = movimiento[0] if len(movimiento) > 0 else False
+    A = movimiento[1] if len(movimiento) > 1 else False
+    B = movimiento[2] if len(movimiento) > 2 else False
+    if mov == TOMAR and puedoTomar():
         tomar()
-    elif movimiento[0] == APOYAR and pozoDisponible:
-        SEGUIR
-    
-    
+    elif mov == APOYAR and puedoApoyar(A):
+        apoyar(A)
+    elif mov == DESCARTAR and puedoDescartar(A):
+        descartar(A)
+    elif mov == MOVER_POZO and puedoMover(POZO, A):
+        mover(POZO, A)
+    elif mov == MOVER and puedoMover(A, B):
+        mover(A, B)
+
+def puedoTomar():
+    return len(mazo) > 0 and pozoDisponible
+
+def tomar():
+    pozo.append(mazo[-1])
+    mazo.pop()
+
+def puedoApoyar(A):
+    return pozoDisponible \
+    and (A in CLAVES_PALOS and CLAVES[A] > 0 \
+    or A in CLAVES_COLUMNAS and len(CLAVES[A]) > 0)
+
+def apoyar(A):
+    if A in CLAVES_PALOS:
+        carta = (CLAVES[A], PALOS[CLAVES_PALOS.index[A]])
+        CLAVES[A] -= 1
+    else:
+        carta = CLAVES[A][-1]
+        CLAVES[A].pop()
+    pozo.append(carta)
+    pozoDisponible = False
+
+def puedoDescartar(A):
+    return (A in CLAVES_COLUMNAS or A == POZO) \
+    and descartadas[PALOS.index[CLAVES[A][-1][PALO]]] == CLAVES[A][-1][NUM] -1 #La última descartada del palo es la anterior
+
+def descartar(A):
+    descartadas[PALOS.index[CLAVES[A][-1][PALO]]] += 1
+    CLAVES[A].pop()
+
+#puedoMover(A, B)
+#mover(A, B)
 
 def limpiar_pantalla():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -67,6 +107,9 @@ COL_1 = 'E'
 COL_2 = 'F'
 COL_3 = 'G'
 COL_4 = 'H'
+POZO = 'P'
+CLAVES_PALOS = [ORO, COPA, ESPADA, BASTO]
+CLAVES_COLUMNAS = [COL_1, COL_2, COL_3, COL_4]
 
 
 
@@ -81,6 +124,18 @@ columnas = [[] for i in range(NUM_COLUMNAS)]
 descartadas = [0 for i in range(NUM_PALOS)]
 pozo = []
 pozoDisponible = True
+
+CLAVES = {
+    ORO : descartadas[0],
+    COPA : descartadas[1],
+    ESPADA : descartadas[2],
+    BASTO : descartadas[3],
+    COL_1 : columnas[0],
+    COL_2 : columnas[1],
+    COL_3 : columnas[2],
+    COL_4 : columnas[3],
+    POZO : pozo
+}
 
 shuffle(mazo)
 columnas[0].append(mazo[0])
