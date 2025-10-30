@@ -83,11 +83,26 @@ def puedoDescartar(A):
     and descartadas[PALOS.index[CLAVES[A][-1][PALO]]] == CLAVES[A][-1][NUM] -1 #La última descartada del palo es la anterior
 
 def descartar(A):
+    if A == POZO:
+        pozoDisponible = True
     descartadas[PALOS.index[CLAVES[A][-1][PALO]]] += 1
     CLAVES[A].pop()
 
-#puedoMover(A, B)
-#mover(A, B)
+def puedoMover(A, B):
+    return B == POZO and puedoApoyar(A) \
+    or B in CLAVES_PALOS and puedoDescartar(A) and CLAVES[A][-1][PALO] == PALOS[CLAVES_PALOS.index(B)] \
+    or B in CLAVES_COLUMNAS \
+    and ((A in CLAVES_COLUMNAS or A == POZO) and CLAVES[A][-1][NUM] == CLAVES[B][-1][NUM] - 1 and CLAVES[A][-1][PALO] != PALOS[CLAVES_PALOS.index(B)] \
+    or #SEGUIR con A in CLAVES_PALOS (descartar)
+
+def mover(A, B):
+    if A == POZO:
+        pozoDisponible = True
+    if B == POZO:
+        apoyar(B)
+    if B in CLAVES_PALOS:
+        descartar(A)
+    
 
 def limpiar_pantalla():
     os.system('cls' if os.name == 'nt' else 'clear')
