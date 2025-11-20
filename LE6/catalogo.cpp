@@ -12,21 +12,24 @@ using namespace std;
 #define BEBIDA_ALCOHOLICA 'A'
 
 //Menú
-#define MENU_AGREGAR 1
-#define MENU_ELIMINAR 2
-#define MENU_SALIR 3
+#define MENU_VER 1
+#define MENU_AGREGAR 2
+#define MENU_ELIMINAR 3
+#define MENU_SALIR 4
 
 //Prototipos
+void VerLista();
 void Agregar();
 void Eliminar();
 
 class Producto
 {
     protected: //protected permite que las clases hijas accedan
-        char nombre[MAX_CHAR];
+        string nombre;
         int codigo;
         float precio;
     public:
+        Producto * next = NULL;
         virtual char Tipo() {return SIN_TIPO;} //virtual indica que el método puede ser redefinido por las clases hijas
         virtual void Mostrar();
 };
@@ -59,19 +62,14 @@ class BebidaAlcoholica : public Bebida
         void Mostrar() override;
 };
 
-struct Nodo
-{
-    Producto * producto = NULL;
-    Producto * next = NULL;
-}
-
 int main()
 {
-    Nodo lista = LeerArchivo();
+    Nodo * lista = LeerArchivo();
     bool salir = false;
     while (!salir)
     {
         bool opcionValida = true;
+        cout << MENU_VER << ". Ver lista" << endl;
         cout << MENU_AGREGAR << ". Agregar" << endl;
         cout << MENU_ELIMINAR << ". Eliminar" << endl;
         cout << MENU_SALIR << ". Salir" << endl;
@@ -112,7 +110,17 @@ int main()
     return 0;
 }
 
-Nodo LeerArchivo()
+Producto * LeerArchivo()
+{
+    Producto * lista = NULL;
+    ifstream archivo("catalogo.bin")
+    if (archivo.is_open())
+    {
+        
+    }
+}
+
+void VerLista()
 {
     
 }
