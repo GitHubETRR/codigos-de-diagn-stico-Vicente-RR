@@ -42,6 +42,7 @@ def imp_movimientos():
 
 def pedir_movimiento():
     movimiento = input("Ingresá tu movimiento: ")
+    limpiar_pantalla()
     mov = movimiento[0] if len(movimiento) > 0 else False
     A = movimiento[1] if len(movimiento) > 1 else False
     B = movimiento[2] if len(movimiento) > 2 else False
@@ -55,6 +56,8 @@ def pedir_movimiento():
         mover(POZO, A)
     elif mov == MOVER and puedoMover(A, B):
         mover(A, B)
+    else:
+        print("No es un movimiento válido")
 
 def puedoTomar():
     return len(mazo) > 0 and pozoDisponible
@@ -69,8 +72,9 @@ def puedoApoyar(A):
     or A in CLAVES_COLUMNAS and len(CLAVES[A]) > 0)
 
 def apoyar(A):
+    global pozoDisponible
     if A in CLAVES_PALOS:
-        carta = (CLAVES[A], PALOS[CLAVES_PALOS.index[A]])
+        carta = (CLAVES[A], PALOS[CLAVES_PALOS.index(A)])
         CLAVES[A] -= 1
     else:
         carta = CLAVES[A][-1]
@@ -79,30 +83,39 @@ def apoyar(A):
     pozoDisponible = False
 
 def puedoDescartar(A):
-    return (A in CLAVES_COLUMNAS or A == POZO) \
-    and descartadas[PALOS.index[CLAVES[A][-1][PALO]]] == CLAVES[A][-1][NUM] -1 #La última descartada del palo es la anterior
+    return (A in CLAVES_COLUMNAS or A == POZO) and len(CLAVES[A]) > 0 \
+    and descartadas[PALOS.index(CLAVES[A][-1][PALO])] == CLAVES[A][-1][NUM] -1 #La última descartada del palo es la anterior
 
 def descartar(A):
+    global pozoDisponible
     if A == POZO:
         pozoDisponible = True
-    descartadas[PALOS.index[CLAVES[A][-1][PALO]]] += 1
+    descartadas[PALOS.index(CLAVES[A][-1][PALO])] += 1
     CLAVES[A].pop()
 
 def puedoMover(A, B):
     return B == POZO and puedoApoyar(A) \
-    or B in CLAVES_PALOS and puedoDescartar(A) and CLAVES[A][-1][PALO] == PALOS[CLAVES_PALOS.index(B)] \
-    or B in CLAVES_COLUMNAS \
-    and ((A in CLAVES_COLUMNAS or A == POZO) and CLAVES[A][-1][NUM] == CLAVES[B][-1][NUM] - 1 and CLAVES[A][-1][PALO] != PALOS[CLAVES_PALOS.index(B)] \
-    or #SEGUIR con A in CLAVES_PALOS (descartar)
+    or B in CLAVES_PALOS and puedoDescartar(A) and (CLAVES[A][-1][PALO] == PALOS[CLAVES_PALOS.index(B)]) \
+    or B in CLAVES_COLUMNAS and \
+    ((A in CLAVES_COLUMNAS or A == POZO) and len(CLAVES[A]) > 0 and (len(CLAVES[B]) == 0 or CLAVES[A][-1][NUM] == CLAVES[B][-1][NUM] - 1 and CLAVES[A][-1][PALO] != CLAVES[B][-1][PALO]) \
+    or A in CLAVES_PALOS and CLAVES[A] > 0 and (len(CLAVES[B]) == 0 or CLAVES[A] == CLAVES[B][-1][NUM] - 1 and CLAVES[A][-1][PALO] != PALOS[CLAVES_PALOS.index(B)]))
 
 def mover(A, B):
+    global pozoDisponible
     if A == POZO:
         pozoDisponible = True
     if B == POZO:
         apoyar(B)
-    if B in CLAVES_PALOS:
+    elif B in CLAVES_PALOS:
         descartar(A)
-    
+    elif B in CLAVES_COLUMNAS:
+        if A in CLAVES_PALOS:
+            carta = (CLAVES[A], PALOS[CLAVES_PALOS.index(A)])
+            CLAVES[A] -= 1
+        else:
+            carta = CLAVES[A][-1]
+            CLAVES[A].pop()
+        CLAVES[B].append(carta)
 
 def limpiar_pantalla():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -153,11 +166,7 @@ CLAVES = {
 }
 
 shuffle(mazo)
-columnas[0].append(mazo[0])
-columnas[0].append(mazo[1])
-columnas[2].append(mazo[2])
-columnas[3].append(mazo[3])
-columnas[3].append(mazo[4])
-columnas[3].append(mazo[5])
-imp_interfaz()
-pedir_movimiento()
+
+while any(valor != NUM_CARTAS for valor in columnas): #any devuelve verdadero si se cumple la condición en algún momento
+    imp_interfaz()
+    pedir_movimiento()
