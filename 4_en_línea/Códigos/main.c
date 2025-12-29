@@ -31,6 +31,26 @@ Este proyecto es un 4 en línea programado para PIC16F628A con un tablero LED RB
 #define ROJO 1
 #define AZUL 2
 
+    //Decodificación
+#define MAP(f, c, color) (0b10000000 | ((color == ROJO ? 0 : 1) << 6) | ((f-1) << 3) | (c-1))
+#define MAP_X         (0x00)   // salida no usada
+#define N_SALIDAS SR595_NUMBER * 8
+
+const uint8_t mapa[N_SALIDAS] = {
+    MAP_X, MAP(1,4,AZUL), MAP(1,3,ROJO), MAP(1,3,AZUL), MAP(1,2,ROJO), MAP(1,2,AZUL), MAP(1,1,ROJO), MAP(1,1,AZUL), 
+    MAP_X, MAP(2,4,AZUL), MAP(2,3,ROJO), MAP(2,3,AZUL), MAP(2,2,ROJO), MAP(2,2,AZUL), MAP(2,1,ROJO), MAP(2,1,AZUL), 
+    MAP_X, MAP(3,4,AZUL), MAP(3,3,ROJO), MAP(3,3,AZUL), MAP(3,2,ROJO), MAP(3,2,AZUL), MAP(3,1,ROJO), MAP(3,1,AZUL), 
+    MAP_X, MAP(4,4,AZUL), MAP(4,3,ROJO), MAP(4,3,AZUL), MAP(4,2,ROJO), MAP(4,2,AZUL), MAP(4,1,ROJO), MAP(4,1,AZUL), 
+    MAP_X, MAP(5,4,AZUL), MAP(5,3,ROJO), MAP(5,3,AZUL), MAP(5,2,ROJO), MAP(5,2,AZUL), MAP(5,1,ROJO), MAP(5,1,AZUL), 
+    MAP_X, MAP(6,4,AZUL), MAP(6,3,ROJO), MAP(6,3,AZUL), MAP(6,2,ROJO), MAP(6,2,AZUL), MAP(6,1,ROJO), MAP(6,1,AZUL), 
+    MAP_X, MAP(6,7,ROJO), MAP(6,7,AZUL), MAP(6,6,ROJO), MAP(6,6,AZUL), MAP(6,5,ROJO), MAP(6,5,AZUL), MAP(6,4,ROJO), 
+    MAP_X, MAP(5,7,ROJO), MAP(5,7,AZUL), MAP(5,6,ROJO), MAP(5,6,AZUL), MAP(5,5,ROJO), MAP(5,5,AZUL), MAP(5,4,ROJO), 
+    MAP_X, MAP(4,7,ROJO), MAP(4,7,AZUL), MAP(4,6,ROJO), MAP(4,6,AZUL), MAP(4,5,ROJO), MAP(4,5,AZUL), MAP(4,4,ROJO), 
+    MAP_X, MAP(3,7,ROJO), MAP(3,7,AZUL), MAP(3,6,ROJO), MAP(3,6,AZUL), MAP(3,5,ROJO), MAP(3,5,AZUL), MAP(3,4,ROJO), 
+    MAP_X, MAP(2,7,ROJO), MAP(2,7,AZUL), MAP(2,6,ROJO), MAP(2,6,AZUL), MAP(2,5,ROJO), MAP(2,5,AZUL), MAP(2,4,ROJO), 
+    MAP_X, MAP(1,7,ROJO), MAP(1,7,AZUL), MAP(1,6,ROJO), MAP(1,6,AZUL), MAP(1,5,ROJO), MAP(1,5,AZUL), MAP(1,4,ROJO), 
+};
+
 //Animaciones
 #define DELAY_FICHA 200
 #define PARPADEOS 5
@@ -113,20 +133,22 @@ void limpiar_tablero(char tablero[COLUMNAS][FILAS])
 
 void actualizar_registros(char tablero[COLUMNAS][FILAS])
 {
-    uint8_t buffer[SR595_NUMBER];
-    for (int i = 0; i < SR595_NUMBER; i++)
-        buffer[i] = 0;
-    
-    for (int columna = 0; columna < COLUMNAS; columna++)
+    uint8_t buffer[SR595_NUMBER] = {0};
+
+    for (int i = 0; i < N_SALIDAS; i++)
     {
-        for (int fila = 0; fila < FILAS; fila++)
+        uint8_t m = mapa[i];
+        if (m & 0b1000000)
         {
-            if (tablero[columna][fila] == ROJO)
-                buffer[fila] |= (1 << columna); //Se enciende un bit en la posición columna
-            if (tablero[columna][fila] == AZUL)
-                buffer[FILAS + fila] |= (1 << columna); //Los registros azules le siguen a los rojos
+            char columna   =  m & 0b00000111;
+            char fila  = (m >> 3) & 0b000111;
+            char color = (m & 0b01000000) ? AZUL : ROJO;
+
+            if (tablero[columna][fila] == color)
+                buffer[i >> 3] |= (1 << (i & 0b00000111));
         }
     }
+
     sr595_update(buffer);
 }
 
