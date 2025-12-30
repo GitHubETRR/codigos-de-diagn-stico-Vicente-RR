@@ -123,7 +123,7 @@ int detectar_entrada()
     do
     {
         scanf("%i", &n);
-    } while ((n < 1) && (n > 7));
+    } while ((n < 1) || (n > 7));
     n--;
     
     return n;
